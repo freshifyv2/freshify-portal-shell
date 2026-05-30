@@ -36,6 +36,7 @@ const nextConfig = {
       { source: "/login", destination: `${USERS_FE}/login` },
       { source: "/api/otp/:path*", destination: `${USERS_FE}/api/otp/:path*` },
       { source: "/api/logout", destination: `${USERS_FE}/api/logout` },
+      { source: "/api/admin/:path*", destination: `${USERS_FE}/api/admin/:path*` },
 
       // ── Dashboard sub-apps ───────────────────────────────────────────
       { source: "/dashboard/users", destination: `${USERS_FE}/account` },
