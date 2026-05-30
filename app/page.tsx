@@ -9,68 +9,67 @@ export default function Landing() {
   if (token) redirect("/dashboard");
 
   return (
-    <div className="container" style={{ paddingTop: 80, maxWidth: 760 }}>
-      <div className="stack" style={{ gap: 32 }}>
-        <div>
-          <div className="kicker">Sovereign Portal · Reference Implementation</div>
-          <h1 style={{ marginTop: 12 }}>
-            Three sovereign modules.
-            <br />
-            One working portal.
-          </h1>
-          <p className="muted" style={{ marginTop: 16, fontSize: 17, lineHeight: 1.6 }}>
+    <div className="auth-split">
+      <aside className="auth-brand">
+        <div className="auth-brand-content">
+          <div className="auth-brand-mark">
+            <span className="auth-brand-mark-glyph" aria-hidden />
+            Sovereign Portal
+          </div>
+          <h1>Three sovereign modules. One working portal.</h1>
+          <p className="lede">
             Users, Companies, and Workspaces are the framework&apos;s foundation —
             each a first-class sovereign module with its own backend, frontend,
             data store, and lifecycle. This portal composes them through
             server-side rewrites: independently deployed, jointly experienced.
           </p>
+          <ul className="auth-bullets">
+            <li>Pluggable auth — Twilio OTP reference + Auth0 / Okta / Cognito / Clerk adapters</li>
+            <li>Conforms to the Standard Module Interface v0.1 spec</li>
+            <li>Independently deployed FE / BE pairs, composed by a shell</li>
+            <li>Self-hosted on your cloud. Always.</li>
+          </ul>
         </div>
+      </aside>
 
-        <div>
-          <Link href="/login">
-            <button className="primary">Sign in to the demo</button>
+      <main className="auth-form-pane">
+        <div className="auth-form-card">
+          <h2>Welcome</h2>
+          <p className="sub">
+            The sovereign foundation, demonstrated end-to-end.
+          </p>
+
+          <div className="card card-pad" style={{ marginBottom: 20 }}>
+            <div className="kicker" style={{ marginBottom: 12 }}>What runs underneath</div>
+            <div className="stack stack-sm" style={{ fontSize: 13 }}>
+              <div className="spread">
+                <span style={{ fontWeight: 600 }}>Users</span>
+                <span className="pill cyan">freshify-users + -fe</span>
+              </div>
+              <div className="spread">
+                <span style={{ fontWeight: 600 }}>Companies</span>
+                <span className="pill cyan">freshify-companies + -fe</span>
+              </div>
+              <div className="spread">
+                <span style={{ fontWeight: 600 }}>Workspaces</span>
+                <span className="pill cyan">freshify-workspaces + -fe</span>
+              </div>
+              <div className="spread">
+                <span style={{ fontWeight: 600 }}>Shell</span>
+                <span className="pill violet">freshify-portal-shell</span>
+              </div>
+            </div>
+          </div>
+
+          <Link href="/login" className="btn btn-primary btn-block">
+            Sign in to the demo →
           </Link>
-        </div>
 
-        <div className="card">
-          <h2 style={{ marginBottom: 16 }}>What runs underneath</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Layer</th>
-                <th>Backend</th>
-                <th>Frontend</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Users</td>
-                <td><code style={{ fontSize: 12 }}>freshify-users</code></td>
-                <td><code style={{ fontSize: 12 }}>freshify-users-fe</code></td>
-              </tr>
-              <tr>
-                <td>Companies</td>
-                <td><code style={{ fontSize: 12 }}>freshify-companies</code></td>
-                <td><code style={{ fontSize: 12 }}>freshify-companies-fe</code></td>
-              </tr>
-              <tr>
-                <td>Workspaces</td>
-                <td><code style={{ fontSize: 12 }}>freshify-workspaces</code></td>
-                <td><code style={{ fontSize: 12 }}>freshify-workspaces-fe</code></td>
-              </tr>
-              <tr>
-                <td>Shell</td>
-                <td>—</td>
-                <td><code style={{ fontSize: 12 }}>freshify-portal-shell</code></td>
-              </tr>
-            </tbody>
-          </table>
+          <p className="fineprint">
+            Reference implementation built by Freshify · The Sovereign Module architecture
+          </p>
         </div>
-
-        <div className="muted" style={{ fontSize: 13, textAlign: "center" }}>
-          Built by Freshify · the Sovereign Module reference architecture
-        </div>
-      </div>
+      </main>
     </div>
   );
 }

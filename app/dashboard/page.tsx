@@ -1,8 +1,15 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { readSessionToken, decodeClaims } from "@/lib/session";
+import { Chrome } from "@/lib/Chrome";
 
 export const dynamic = "force-dynamic";
+
+function greeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 18) return "Good afternoon";
+  return "Good evening";
+}
 
 export default function Dashboard() {
   const token = readSessionToken();
@@ -11,75 +18,107 @@ export default function Dashboard() {
   const claims = decodeClaims(token);
   if (!claims) redirect("/login");
 
+  const name = claims.displayName || claims.email || "there";
+  const firstName = (claims.displayName || "").split(/\s+/)[0] || name;
+
   return (
-    <>
-      <nav className="nav">
-        <div className="nav-inner">
-          <div className="brand">Sovereign Portal</div>
-          <div className="nav-links">
-            <Link href="/dashboard" className="nav-link active">Dashboard</Link>
-            <Link href="/dashboard/companies" className="nav-link">Companies</Link>
-            <Link href="/dashboard/workspaces" className="nav-link">Workspaces</Link>
-            <Link href="/dashboard/users/account" className="nav-link">Account</Link>
-          </div>
-        </div>
-      </nav>
-
-      <div className="container">
-        <div className="stack" style={{ gap: 24 }}>
-          <div>
-            <div className="kicker">Welcome back</div>
-            <h1 style={{ marginTop: 8 }}>
-              {claims.displayName || claims.email}
-            </h1>
-            <p className="muted" style={{ marginTop: 8 }}>
-              Three sovereign modules, composed into one portal.
-            </p>
-          </div>
-
-          <div className="row" style={{ gap: 16, flexWrap: "wrap" }}>
-            <Link href="/dashboard/users/account" style={{ flex: "1 1 280px", textDecoration: "none" }}>
-              <div className="card" style={{ cursor: "pointer" }}>
-                <div className="kicker">01 · Users</div>
-                <h2 style={{ marginTop: 8 }}>Your account</h2>
-                <p className="muted" style={{ marginTop: 8, fontSize: 14 }}>
-                  Profile, claims, role assignments across all four layers.
-                </p>
-              </div>
-            </Link>
-            <Link href="/dashboard/companies" style={{ flex: "1 1 280px", textDecoration: "none" }}>
-              <div className="card" style={{ cursor: "pointer" }}>
-                <div className="kicker">02 · Companies</div>
-                <h2 style={{ marginTop: 8 }}>Your companies</h2>
-                <p className="muted" style={{ marginTop: 8, fontSize: 14 }}>
-                  Personal + organization companies. Add members.
-                </p>
-              </div>
-            </Link>
-            <Link href="/dashboard/workspaces" style={{ flex: "1 1 280px", textDecoration: "none" }}>
-              <div className="card" style={{ cursor: "pointer" }}>
-                <div className="kicker">03 · Workspaces</div>
-                <h2 style={{ marginTop: 8 }}>Workspaces</h2>
-                <p className="muted" style={{ marginTop: 8, fontSize: 14 }}>
-                  Scoped to your active company. Create, manage, invite.
-                </p>
-              </div>
-            </Link>
-          </div>
-
-          <div className="card">
-            <h2 style={{ marginBottom: 8 }}>Session</h2>
-            <table>
-              <tbody>
-                <tr><th style={{ width: 200 }}>User ID</th><td><code style={{ fontSize: 13 }}>{claims.userId}</code></td></tr>
-                <tr><th>Active company</th><td>{claims.companyName || claims.companyId || "—"}</td></tr>
-                <tr><th>Active workspace</th><td>{claims.workspaceName || claims.workspaceId || "—"}</td></tr>
-                <tr><th>Expires</th><td>{claims.exp ? new Date(claims.exp * 1000).toLocaleString() : "—"}</td></tr>
-              </tbody>
-            </table>
-          </div>
+    <Chrome
+      active="dashboard"
+      pageTitle="Dashboard"
+      user={{ userId: claims.userId, displayName: claims.displayName || claims.email }}
+      activeCompany={claims.companyName ? { name: claims.companyName } : null}
+    >
+      <div className="page-header">
+        <div className="page-header-left">
+          <div className="kicker">Welcome back</div>
+          <h1>{greeting()}, {firstName}</h1>
+          <div className="sub">Three sovereign modules, composed into one portal.</div>
         </div>
       </div>
-    </>
+
+      <div className="metrics">
+        <div className="metric">
+          <span className="metric-icon" aria-hidden>◇</span>
+          <span className="metric-trend neutral">Foundation</span>
+          <span className="metric-label">Companies</span>
+          <span className="metric-value">—</span>
+        </div>
+        <div className="metric">
+          <span className="metric-icon cyan" aria-hidden>◉</span>
+          <span className="metric-trend neutral">Foundation</span>
+          <span className="metric-label">Workspaces</span>
+          <span className="metric-value">—</span>
+        </div>
+        <div className="metric">
+          <span className="metric-icon" aria-hidden>◔</span>
+          <span className="metric-trend green">Active</span>
+          <span className="metric-label">Session</span>
+          <span className="metric-value">{claims.exp ? Math.max(0, Math.round((claims.exp * 1000 - Date.now()) / (1000 * 60 * 60 * 24))) : "—"}<span style={{ fontSize: 14, color: "var(--muted)", fontWeight: 500, marginLeft: 6 }}>days left</span></span>
+        </div>
+        <div className="metric">
+          <span className="metric-icon" aria-hidden>◧</span>
+          <span className="metric-trend neutral">Standard Module Interface</span>
+          <span className="metric-label">SMI version</span>
+          <span className="metric-value">v0.1</span>
+        </div>
+      </div>
+
+      <div className="row-2">
+        <div className="card card-pad">
+          <div className="cluster" style={{ marginBottom: 12 }}>
+            <span className="kicker">02 · Companies</span>
+          </div>
+          <h2 style={{ marginBottom: 6 }}>Your companies</h2>
+          <p className="muted" style={{ fontSize: 14, marginBottom: 18 }}>
+            Personal and organization companies. Each company is a sovereign tenant
+            with its own member list and admin role table.
+          </p>
+          <a href="/dashboard/companies" className="btn btn-primary btn-sm">
+            Open companies →
+          </a>
+        </div>
+
+        <div className="card card-pad">
+          <div className="cluster" style={{ marginBottom: 12 }}>
+            <span className="kicker">03 · Workspaces</span>
+          </div>
+          <h2 style={{ marginBottom: 6 }}>Workspaces</h2>
+          <p className="muted" style={{ fontSize: 14, marginBottom: 18 }}>
+            Scoped to your active company. Create separate workspaces for design,
+            build, and operations engagements — each with their own member roles.
+          </p>
+          <a href="/dashboard/workspaces" className="btn btn-primary btn-sm">
+            Open workspaces →
+          </a>
+        </div>
+      </div>
+
+      <div className="card" style={{ marginTop: 20 }}>
+        <div className="card-header">
+          <div className="card-title">Session</div>
+          <span className="pill green dot">Active</span>
+        </div>
+        <table className="table">
+          <tbody>
+            <tr>
+              <td className="table-id" style={{ width: 200, color: "var(--muted)" }}>USER ID</td>
+              <td><code style={{ fontSize: 13 }}>{claims.userId}</code></td>
+            </tr>
+            <tr>
+              <td style={{ color: "var(--muted)" }}>ACTIVE COMPANY</td>
+              <td>{claims.companyName || claims.companyId || <span className="muted">—</span>}</td>
+            </tr>
+            <tr>
+              <td style={{ color: "var(--muted)" }}>ACTIVE WORKSPACE</td>
+              <td>{claims.workspaceName || claims.workspaceId || <span className="muted">—</span>}</td>
+            </tr>
+            <tr>
+              <td style={{ color: "var(--muted)" }}>EXPIRES</td>
+              <td>{claims.exp ? new Date(claims.exp * 1000).toLocaleString() : "—"}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </Chrome>
   );
 }
