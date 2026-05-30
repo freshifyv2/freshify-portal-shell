@@ -38,7 +38,6 @@ const NAV_ITEMS: Array<{
   { key: "dashboard", label: "Dashboard", href: "/dashboard", glyph: "◧" },
   { key: "companies", label: "Companies", href: "/dashboard/companies", glyph: "◇" },
   { key: "workspaces", label: "Workspaces", href: "/dashboard/workspaces", glyph: "◉" },
-  { key: "account", label: "Account", href: "/dashboard/users/account", glyph: "◔" },
 ];
 
 function initials(name?: string, fallback = "?"): string {
@@ -92,17 +91,21 @@ export function Chrome({ active, pageTitle, user, activeCompany, children }: Chr
       <main className="main">
         <header className="topbar">
           <div className="topbar-title">{pageTitle}</div>
-          <div className="topbar-user">
-            <div style={{ textAlign: "right", lineHeight: 1.2 }}>
-              <div style={{ fontWeight: 600, fontSize: 13 }}>{user.displayName ?? "Signed in"}</div>
+          <a
+            href="/dashboard/users/account"
+            className={`topbar-user topbar-user-link ${active === "account" ? "active" : ""}`}
+            aria-label="Account"
+          >
+            <div className="topbar-user-text">
+              <div className="topbar-user-name">{user.displayName ?? "Signed in"}</div>
               {user.handle && (
-                <div style={{ color: "var(--muted)", fontSize: 11 }}>@{user.handle}</div>
+                <div className="topbar-user-handle">@{user.handle}</div>
               )}
             </div>
             <span className="avatar" aria-hidden>
               {initials(user.displayName)}
             </span>
-          </div>
+          </a>
         </header>
 
         <div className="content">{children}</div>

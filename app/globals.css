@@ -1548,3 +1548,49 @@ textarea:focus {
 .card-header .muted {
   font-size: 13px;
 }
+
+/* ─── Topbar account link (clickable user pill) ─────────────── */
+.topbar-user-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 10px 6px 14px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.topbar-user-link:hover {
+  background: var(--surface-2);
+  border-color: var(--line);
+}
+
+.topbar-user-link.active {
+  background: var(--violet-soft);
+  border-color: rgba(108, 71, 255, 0.25);
+}
+
+.topbar-user-text {
+  text-align: right;
+  line-height: 1.2;
+  max-width: 220px;
+}
+
+.topbar-user-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar-user-handle {
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
