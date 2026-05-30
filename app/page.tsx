@@ -9,65 +9,62 @@ export default function Landing() {
   if (token) redirect("/dashboard");
 
   return (
-    <div className="auth-split">
-      <aside className="auth-brand">
-        <div className="auth-brand-content">
-          <div className="auth-brand-mark">
-            <span className="auth-brand-mark-glyph" aria-hidden />
-            Sovereign Portal
-          </div>
-          <h1>Three sovereign modules. One working portal.</h1>
-          <p className="lede">
+    <div className="login-split">
+      <aside className="login-brand-panel">
+        <div className="login-brand-panel-logo">Sovereign Portal</div>
+        <div>
+          <h1 className="login-brand-panel-headline">
+            Three sovereign modules.<br />
+            One working portal.
+          </h1>
+          <p className="login-brand-panel-sub">
             Users, Companies, and Workspaces are the framework&apos;s foundation —
             each a first-class sovereign module with its own backend, frontend,
-            data store, and lifecycle. This portal composes them through
-            server-side rewrites: independently deployed, jointly experienced.
+            data store, and lifecycle. Composed by a shell, independently deployed,
+            jointly experienced.
           </p>
-          <ul className="auth-bullets">
-            <li>Pluggable auth — Twilio OTP reference + Auth0 / Okta / Cognito / Clerk adapters</li>
-            <li>Conforms to the Standard Module Interface v0.1 spec</li>
-            <li>Independently deployed FE / BE pairs, composed by a shell</li>
-            <li>Self-hosted on your cloud. Always.</li>
-          </ul>
+        </div>
+        <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>
+          Reference implementation by Freshify · Standard Module Interface v0.1
         </div>
       </aside>
 
-      <main className="auth-form-pane">
-        <div className="auth-form-card">
-          <h2>Welcome</h2>
-          <p className="sub">
+      <main className="login-form-panel">
+        <div className="login-form-card">
+          <h2 style={{ fontFamily: "var(--font-display)", fontSize: 28, fontWeight: 700, margin: "0 0 8px" }}>
+            Welcome
+          </h2>
+          <p style={{ color: "var(--muted)", margin: "0 0 32px" }}>
             The sovereign foundation, demonstrated end-to-end.
           </p>
 
-          <div className="card card-pad" style={{ marginBottom: 20 }}>
-            <div className="kicker" style={{ marginBottom: 12 }}>What runs underneath</div>
-            <div className="stack stack-sm" style={{ fontSize: 13 }}>
-              <div className="spread">
+          <div className="section-card" style={{ marginBottom: 24 }}>
+            <div className="section-card-header">
+              <h3 className="section-card-title">What runs underneath</h3>
+            </div>
+            <div style={{ display: "grid", gap: 12, fontSize: 13 }}>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <span style={{ fontWeight: 600 }}>Users</span>
-                <span className="pill cyan">freshify-users + -fe</span>
+                <span className="pill is-violet">freshify-users + -fe</span>
               </div>
-              <div className="spread">
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <span style={{ fontWeight: 600 }}>Companies</span>
-                <span className="pill cyan">freshify-companies + -fe</span>
+                <span className="pill is-violet">freshify-companies + -fe</span>
               </div>
-              <div className="spread">
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <span style={{ fontWeight: 600 }}>Workspaces</span>
-                <span className="pill cyan">freshify-workspaces + -fe</span>
+                <span className="pill is-violet">freshify-workspaces + -fe</span>
               </div>
-              <div className="spread">
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <span style={{ fontWeight: 600 }}>Shell</span>
-                <span className="pill violet">freshify-portal-shell</span>
+                <span className="pill is-pink">freshify-portal-shell</span>
               </div>
             </div>
           </div>
 
-          <Link href="/login" className="btn btn-primary btn-block">
+          <Link href="/login" className="btn btn-primary" style={{ width: "100%", justifyContent: "center" }}>
             Sign in to the demo →
           </Link>
-
-          <p className="fineprint">
-            Reference implementation built by Freshify · The Sovereign Module architecture
-          </p>
         </div>
       </main>
     </div>
