@@ -6,9 +6,15 @@ export const dynamic = "force-dynamic";
 
 function greeting(): string {
   const h = new Date().getHours();
-  if (h < 12) return "Good morning";
-  if (h < 18) return "Good afternoon";
-  return "Good evening";
+  if (h < 12) return "Good Morning";
+  if (h < 18) return "Good Afternoon";
+  return "Good Evening";
+}
+
+function handleFromEmail(email?: string | null): string {
+  if (!email) return "user";
+  if (email.startsWith("+")) return email.replace(/[^0-9]/g, "");
+  return email.split("@")[0] || email;
 }
 
 export default function Dashboard() {
@@ -18,106 +24,171 @@ export default function Dashboard() {
   const claims = decodeClaims(token);
   if (!claims) redirect("/login");
 
-  const name = claims.displayName || claims.email || "there";
-  const firstName = (claims.displayName || "").split(/\s+/)[0] || name;
+  const displayName = claims.displayName || claims.email || "there";
+  const firstName = (claims.displayName || "").split(/\s+/)[0] || displayName;
+  const handle = handleFromEmail(claims.email);
+  const isOperator = Boolean((claims as any).operator);
+  const daysLeft = claims.exp
+    ? Math.max(0, Math.round((claims.exp * 1000 - Date.now()) / (1000 * 60 * 60 * 24)))
+    : null;
 
   return (
     <Chrome
       active="dashboard"
       pageTitle="Dashboard"
-      user={{ userId: claims.userId, displayName: claims.displayName || claims.email }}
+      user={{
+        userId: claims.userId,
+        displayName,
+        handle,
+        isOperator,
+      }}
       activeCompany={claims.companyName ? { name: claims.companyName } : null}
     >
-      <div className="page-header">
-        <div className="page-header-left">
-          <div className="kicker">Welcome back</div>
-          <h1>{greeting()}, {firstName}</h1>
-          <div className="sub">Three sovereign modules, composed into one portal.</div>
-        </div>
-      </div>
+      <h1 className="page-greeting">{greeting()} {firstName}!</h1>
 
-      <div className="metrics">
-        <div className="metric">
-          <span className="metric-icon" aria-hidden>◇</span>
-          <span className="metric-trend neutral">Foundation</span>
-          <span className="metric-label">Companies</span>
-          <span className="metric-value">—</span>
-        </div>
-        <div className="metric">
-          <span className="metric-icon cyan" aria-hidden>◉</span>
-          <span className="metric-trend neutral">Foundation</span>
-          <span className="metric-label">Workspaces</span>
-          <span className="metric-value">—</span>
-        </div>
-        <div className="metric">
-          <span className="metric-icon" aria-hidden>◔</span>
-          <span className="metric-trend green">Active</span>
-          <span className="metric-label">Session</span>
-          <span className="metric-value">{claims.exp ? Math.max(0, Math.round((claims.exp * 1000 - Date.now()) / (1000 * 60 * 60 * 24))) : "—"}<span style={{ fontSize: 14, color: "var(--muted)", fontWeight: 500, marginLeft: 6 }}>days left</span></span>
-        </div>
-        <div className="metric">
-          <span className="metric-icon" aria-hidden>◧</span>
-          <span className="metric-trend neutral">Standard Module Interface</span>
-          <span className="metric-label">SMI version</span>
-          <span className="metric-value">v0.1</span>
-        </div>
-      </div>
-
-      <div className="row-2">
-        <div className="card card-pad">
-          <div className="cluster" style={{ marginBottom: 12 }}>
-            <span className="kicker">02 · Companies</span>
+      {/* RAS metric row — icon-chip LEFT, badge TOP-RIGHT, label, BIG NUMBER */}
+      <div className="metrics-row">
+        <div className="metric-card">
+          <div className="metric-card-top">
+            <span className="metric-card-icon" aria-hidden>◇</span>
+            <span className="metric-card-badge is-violet">{isOperator ? "ALL ACCESS" : "ACTIVE"}</span>
           </div>
-          <h2 style={{ marginBottom: 6 }}>Your companies</h2>
-          <p className="muted" style={{ fontSize: 14, marginBottom: 18 }}>
-            Personal and organization companies. Each company is a sovereign tenant
-            with its own member list and admin role table.
-          </p>
-          <a href="/dashboard/companies" className="btn btn-primary btn-sm">
-            Open companies →
-          </a>
+          <div className="metric-card-body">
+            <p className="metric-card-label">Companies</p>
+            <p className="metric-card-value">{isOperator ? "4" : "—"}</p>
+          </div>
         </div>
 
-        <div className="card card-pad">
-          <div className="cluster" style={{ marginBottom: 12 }}>
-            <span className="kicker">03 · Workspaces</span>
+        <div className="metric-card">
+          <div className="metric-card-top">
+            <span className="metric-card-icon is-cyan" aria-hidden>◉</span>
+            <span className="metric-card-badge is-violet">{isOperator ? "ALL ACCESS" : "AVAILABLE"}</span>
           </div>
-          <h2 style={{ marginBottom: 6 }}>Workspaces</h2>
-          <p className="muted" style={{ fontSize: 14, marginBottom: 18 }}>
-            Scoped to your active company. Create separate workspaces for design,
-            build, and operations engagements — each with their own member roles.
-          </p>
-          <a href="/dashboard/workspaces" className="btn btn-primary btn-sm">
-            Open workspaces →
-          </a>
+          <div className="metric-card-body">
+            <p className="metric-card-label">Workspaces</p>
+            <p className="metric-card-value">{isOperator ? "8" : "—"}</p>
+          </div>
+        </div>
+
+        <div className="metric-card">
+          <div className="metric-card-top">
+            <span className="metric-card-icon is-green" aria-hidden>◐</span>
+            <span className="metric-card-badge">{isOperator ? "ALL ACCESS" : "MEMBER"}</span>
+          </div>
+          <div className="metric-card-body">
+            <p className="metric-card-label">Users</p>
+            <p className="metric-card-value">{isOperator ? "16" : "—"}</p>
+          </div>
+        </div>
+
+        <div className="metric-card">
+          <div className="metric-card-top">
+            <span className="metric-card-icon is-amber" aria-hidden>◔</span>
+            <span className="metric-card-badge">ACTIVE</span>
+          </div>
+          <div className="metric-card-body">
+            <p className="metric-card-label">Session days left</p>
+            <p className="metric-card-value">{daysLeft ?? "—"}</p>
+          </div>
+        </div>
+
+        <div className="metric-card">
+          <div className="metric-card-top">
+            <span className="metric-card-icon" aria-hidden>◧</span>
+            <span className="metric-card-badge is-gray">SMI v0.1</span>
+          </div>
+          <div className="metric-card-body">
+            <p className="metric-card-label">Module spec</p>
+            <p className="metric-card-value">v0.1</p>
+          </div>
         </div>
       </div>
 
-      <div className="card" style={{ marginTop: 20 }}>
-        <div className="card-header">
-          <div className="card-title">Session</div>
-          <span className="pill green dot">Active</span>
+      {/* RAS 2x2 list cards */}
+      <div className="lists-grid">
+        <div className="list-card">
+          <div className="list-card-header">
+            <h3 className="list-card-title">Active Session</h3>
+            <a href="/dashboard/users/account" className="list-card-link">View account →</a>
+          </div>
+          <div className="list-card-body">
+            <table className="data-table">
+              <tbody>
+                <tr>
+                  <td style={{ color: "var(--muted)", fontSize: 13 }}>USER</td>
+                  <td>
+                    <div className="user-cell">
+                      <div className="user-cell-text">
+                        <div className="user-cell-name">{displayName}</div>
+                        <div className="user-cell-handle">@{handle}</div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ color: "var(--muted)", fontSize: 13 }}>ACTIVE COMPANY</td>
+                  <td>{claims.companyName || <span className="muted">—</span>}</td>
+                </tr>
+                <tr>
+                  <td style={{ color: "var(--muted)", fontSize: 13 }}>ACTIVE WORKSPACE</td>
+                  <td>{claims.workspaceName || <span className="muted">—</span>}</td>
+                </tr>
+                <tr>
+                  <td style={{ color: "var(--muted)", fontSize: 13 }}>ROLE</td>
+                  <td>
+                    <span className="pill is-violet">{claims.roles?.[0]?.role || "member"}</span>
+                    {isOperator && (
+                      <span className="pill is-green" style={{ marginLeft: 8 }}>operator</span>
+                    )}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-        <table className="table">
-          <tbody>
-            <tr>
-              <td className="table-id" style={{ width: 200, color: "var(--muted)" }}>USER ID</td>
-              <td><code style={{ fontSize: 13 }}>{claims.userId}</code></td>
-            </tr>
-            <tr>
-              <td style={{ color: "var(--muted)" }}>ACTIVE COMPANY</td>
-              <td>{claims.companyName || claims.companyId || <span className="muted">—</span>}</td>
-            </tr>
-            <tr>
-              <td style={{ color: "var(--muted)" }}>ACTIVE WORKSPACE</td>
-              <td>{claims.workspaceName || claims.workspaceId || <span className="muted">—</span>}</td>
-            </tr>
-            <tr>
-              <td style={{ color: "var(--muted)" }}>EXPIRES</td>
-              <td>{claims.exp ? new Date(claims.exp * 1000).toLocaleString() : "—"}</td>
-            </tr>
-          </tbody>
-        </table>
+
+        <div className="list-card">
+          <div className="list-card-header">
+            <h3 className="list-card-title">Sovereign Modules</h3>
+            <a href="/dashboard/companies" className="list-card-link">Open Companies →</a>
+          </div>
+          <div className="list-card-body">
+            <table className="data-table">
+              <tbody>
+                <tr className="is-clickable" onClick={undefined}>
+                  <td>
+                    <a href="/dashboard/companies" className="data-table-strong" style={{ color: "var(--fg)" }}>Companies</a>
+                    <div className="data-table-sub">Sovereign tenant module</div>
+                  </td>
+                  <td><span className="status-pill is-active">Live</span></td>
+                </tr>
+                <tr>
+                  <td>
+                    <a href="/dashboard/workspaces" className="data-table-strong" style={{ color: "var(--fg)" }}>Workspaces</a>
+                    <div className="data-table-sub">Per-tenant workspace module</div>
+                  </td>
+                  <td><span className="status-pill is-active">Live</span></td>
+                </tr>
+                <tr>
+                  <td>
+                    <a href="/dashboard/users/account" className="data-table-strong" style={{ color: "var(--fg)" }}>Users</a>
+                    <div className="data-table-sub">Identity + auth module</div>
+                  </td>
+                  <td><span className="status-pill is-active">Live</span></td>
+                </tr>
+                {isOperator && (
+                  <tr>
+                    <td>
+                      <a href="/dashboard/users-list" className="data-table-strong" style={{ color: "var(--fg)" }}>Users (cross-tenant)</a>
+                      <div className="data-table-sub">Operator-only view</div>
+                    </td>
+                    <td><span className="status-pill is-active">Live</span></td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </Chrome>
   );

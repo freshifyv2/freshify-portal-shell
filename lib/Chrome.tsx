@@ -1,19 +1,25 @@
 /**
- * Sovereign Portal shell chrome — sidebar + topbar.
+ * Sovereign Portal shell chrome — RAS-style sidebar + topbar.
  *
- * Every FE (users / companies / workspaces) and the portal-shell itself
- * renders the same Chrome on authenticated pages. This is a server
- * component — it reads the JWT claims from the cookie and renders the
- * user's display name + active nav state.
+ * Layout matches RAS Figma reference exactly:
+ * - LEFT: Dark navy sidebar with brand wordmark + dropdown, nav items, log out at bottom
+ * - TOP: White topbar with page title + bell icon + circular avatar + name
+ * - MAIN: Light grey content surface (#f4f4f5)
  *
- * Each FE ships its own copy via the shared library convention. When
- * we lift this into @freshifyv2/portal-ui, this file disappears from
- * every FE.
+ * Color rule: RAS red → Freshify violet (#6c47ff). Everything else preserved.
+ *
+ * The "Users" nav item is operator-only — only rendered when user.isOperator is true.
  */
 
 import type { ReactNode } from "react";
 
-export type ActiveSection = "dashboard" | "companies" | "workspaces" | "account" | null;
+export type ActiveSection =
+  | "dashboard"
+  | "companies"
+  | "workspaces"
+  | "users"
+  | "account"
+  | null;
 
 export interface ChromeProps {
   active: ActiveSection;
@@ -23,21 +29,28 @@ export interface ChromeProps {
     userId: string;
     displayName?: string;
     handle?: string;
+    /** Operator role grants access to cross-tenant Users module */
+    isOperator?: boolean;
   };
   /** Active company context if known (read from claims or BE call) */
   activeCompany?: { name: string } | null;
   children: ReactNode;
 }
 
-const NAV_ITEMS: Array<{
+interface NavItem {
   key: ActiveSection;
   label: string;
   href: string;
   glyph: string;
-}> = [
+  /** If true, only renders when user.isOperator */
+  operatorOnly?: boolean;
+}
+
+const NAV_ITEMS: NavItem[] = [
   { key: "dashboard", label: "Dashboard", href: "/dashboard", glyph: "◧" },
   { key: "companies", label: "Companies", href: "/dashboard/companies", glyph: "◇" },
   { key: "workspaces", label: "Workspaces", href: "/dashboard/workspaces", glyph: "◉" },
+  { key: "users", label: "Users", href: "/dashboard/users-list", glyph: "◐", operatorOnly: true },
 ];
 
 function initials(name?: string, fallback = "?"): string {
@@ -49,40 +62,45 @@ function initials(name?: string, fallback = "?"): string {
 }
 
 export function Chrome({ active, pageTitle, user, activeCompany, children }: ChromeProps) {
+  const visibleNav = NAV_ITEMS.filter((it) => !it.operatorOnly || user.isOperator);
+
+  // Brand label in sidebar: active company name if present, else "Sovereign Portal"
+  const brandLabel = activeCompany?.name ?? "Sovereign Portal";
+
   return (
     <div className="shell">
       <aside className="sidebar">
-        <div className="sidebar-brand">
-          <span className="sidebar-brand-mark" aria-hidden />
-          Sovereign Portal
+        {/* Brand wordmark + accent circle (RAS R.A.S. logo position) */}
+        <div className="sidebar-logo">
+          <span className="sidebar-logo-mark" aria-hidden>
+            <span className="sidebar-logo-mark-inner">SP</span>
+          </span>
         </div>
 
-        <div className="workspace-switcher" role="button" tabIndex={0}>
-          <div>
-            <span className="label">Active company</span>
-            <div>{activeCompany?.name ?? "No active company"}</div>
-          </div>
-          <span aria-hidden style={{ color: "var(--muted)" }}>⌄</span>
+        {/* Company switcher — dropdown affordance below logo */}
+        <div className="sidebar-switcher" role="button" tabIndex={0}>
+          <span className="sidebar-switcher-label">{brandLabel}</span>
+          <span className="sidebar-switcher-chevron" aria-hidden>⌄</span>
         </div>
 
-        <nav className="nav" aria-label="Primary">
-          {NAV_ITEMS.map((it) => (
+        <nav className="sidebar-nav" aria-label="Primary">
+          {visibleNav.map((it) => (
             <a
               key={it.key}
               href={it.href}
-              className={`nav-item ${active === it.key ? "active" : ""}`}
+              className={`sidebar-nav-item ${active === it.key ? "is-active" : ""}`}
             >
-              <span className="nav-item-icon" aria-hidden>{it.glyph}</span>
-              {it.label}
+              <span className="sidebar-nav-icon" aria-hidden>{it.glyph}</span>
+              <span className="sidebar-nav-label">{it.label}</span>
             </a>
           ))}
         </nav>
 
         <div className="sidebar-footer">
-          <form action="/api/logout" method="post">
-            <button type="submit" className="nav-item" style={{ width: "100%", textAlign: "left", background: "transparent", border: 0, cursor: "pointer", fontFamily: "inherit" }}>
-              <span className="nav-item-icon" aria-hidden>↪</span>
-              Sign out
+          <form action="/api/logout" method="post" className="sidebar-logout-form">
+            <button type="submit" className="sidebar-logout">
+              <span className="sidebar-nav-icon" aria-hidden>↪</span>
+              <span>Log Out</span>
             </button>
           </form>
         </div>
@@ -90,22 +108,23 @@ export function Chrome({ active, pageTitle, user, activeCompany, children }: Chr
 
       <main className="main">
         <header className="topbar">
-          <div className="topbar-title">{pageTitle}</div>
-          <a
-            href="/dashboard/users/account"
-            className={`topbar-user topbar-user-link ${active === "account" ? "active" : ""}`}
-            aria-label="Account"
-          >
-            <div className="topbar-user-text">
-              <div className="topbar-user-name">{user.displayName ?? "Signed in"}</div>
-              {user.handle && (
-                <div className="topbar-user-handle">@{user.handle}</div>
-              )}
-            </div>
-            <span className="avatar" aria-hidden>
-              {initials(user.displayName)}
-            </span>
-          </a>
+          <h1 className="topbar-title">{pageTitle}</h1>
+          <div className="topbar-actions">
+            <button type="button" className="topbar-bell" aria-label="Notifications">
+              <span aria-hidden>🔔</span>
+              <span className="topbar-bell-dot" aria-hidden />
+            </button>
+            <a
+              href="/dashboard/users/account"
+              className={`topbar-user ${active === "account" ? "is-active" : ""}`}
+              aria-label="Account"
+            >
+              <span className="topbar-avatar" aria-hidden>
+                {initials(user.displayName)}
+              </span>
+              <span className="topbar-user-name">{user.displayName ?? "Signed in"}</span>
+            </a>
+          </div>
         </header>
 
         <div className="content">{children}</div>

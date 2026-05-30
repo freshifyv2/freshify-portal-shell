@@ -11,6 +11,7 @@ export interface SessionClaims {
   workspaceId: string | null;
   workspaceName: string | null;
   roles: Array<{ layer: string; scopeId: string | null; role: string }>;
+  operator?: { operatorId: string; reason: string } | null;
   exp?: number;
 }
 
