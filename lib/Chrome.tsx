@@ -50,7 +50,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "dashboard", label: "Dashboard", href: "/dashboard", glyph: "◧" },
   { key: "companies", label: "Companies", href: "/dashboard/companies", glyph: "◇" },
   { key: "workspaces", label: "Workspaces", href: "/dashboard/workspaces", glyph: "◉" },
-  { key: "users", label: "Users", href: "/dashboard/users-list", glyph: "◐", operatorOnly: true },
+  { key: "users", label: "Users", href: "/dashboard/users/list", glyph: "◐", operatorOnly: true },
 ];
 
 function initials(name?: string, fallback = "?"): string {

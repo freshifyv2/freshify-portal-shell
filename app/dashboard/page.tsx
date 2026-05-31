@@ -179,7 +179,7 @@ export default function Dashboard() {
                 {isOperator && (
                   <tr>
                     <td>
-                      <a href="/dashboard/users-list" className="data-table-strong" style={{ color: "var(--fg)" }}>Users (cross-tenant)</a>
+                      <a href="/dashboard/users/list" className="data-table-strong" style={{ color: "var(--fg)" }}>Users (cross-tenant)</a>
                       <div className="data-table-sub">Operator-only view</div>
                     </td>
                     <td><span className="status-pill is-active">Live</span></td>
