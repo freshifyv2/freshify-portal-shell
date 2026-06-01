@@ -533,6 +533,17 @@ button {
   background: var(--violet-2);
   border-color: var(--violet-2);
 }
+.btn:disabled,
+.btn[disabled],
+.btn-primary:disabled,
+.btn-primary[disabled] {
+  background: var(--surface-2, #1f2937);
+  color: var(--muted, #94a3b8);
+  border-color: var(--border, #334155);
+  cursor: not-allowed;
+  opacity: 0.6;
+  pointer-events: none;
+}
 
 .btn-secondary {
   background: var(--surface);

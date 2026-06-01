@@ -25,6 +25,8 @@ export default async function Dashboard() {
   const claims = decodeClaims(token);
   if (!claims) redirect("/login");
 
+  const chromeCtx = await loadChromeContext();
+
   const displayName = claims.displayName || claims.email || "there";
   const firstName = (claims.displayName || "").split(/\s+/)[0] || displayName;
   const handle = handleFromEmail(claims.email);
@@ -37,15 +39,16 @@ export default async function Dashboard() {
     <Chrome
       active="dashboard"
       pageTitle="Dashboard"
-      user={{
+      user={chromeCtx?.user ?? {
         userId: claims.userId,
         displayName,
         handle,
         isOperator,
       }}
-      activeCompany={claims.companyName ? { name: claims.companyName } : null}
+      activeCompany={chromeCtx?.activeCompany ?? (claims.companyName ? { name: claims.companyName } : null)}
+      tenantOptions={chromeCtx?.tenantOptions ?? []}
     >
-      <h1 className="page-greeting">{greeting()} {firstName}!</h1>
+      <h1 className="page-greeting">{`${greeting()} ${firstName}!`}</h1>
 
       {/* RAS metric row — icon-chip LEFT, badge TOP-RIGHT, label, BIG NUMBER */}
       <div className="metrics-row">
