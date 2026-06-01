@@ -1746,20 +1746,229 @@ button {
   }
 }
 
-@media (max-width: 768px) {
-  :root {
-    --sidebar-width: 0px;
+/* ============================================================
+   Portal v3 — Tenant switcher dropdown, footer, mobile drawer,
+   nav group dividers, guide tags, topbar hamburger.
+   Additive — does not alter existing component styles.
+   ============================================================ */
+
+/* ---- Tenant switcher: details/summary dropdown for operators ---- */
+.sidebar-switcher-details {
+  margin: 0 0 24px;
+}
+.sidebar-switcher-details > .sidebar-switcher {
+  margin: 0;
+  list-style: none;
+}
+.sidebar-switcher-details > .sidebar-switcher::-webkit-details-marker {
+  display: none;
+}
+.sidebar-switcher-details[open] > .sidebar-switcher {
+  background: var(--sidebar-hover);
+}
+.sidebar-switcher-details[open] .sidebar-switcher-chevron {
+  transform: rotate(180deg);
+}
+.sidebar-switcher.is-disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.sidebar-switcher.is-disabled:hover {
+  background: transparent;
+}
+.sidebar-switcher-menu {
+  margin-top: 6px;
+  padding: 6px;
+  background: var(--sidebar-bg-2);
+  border: 1px solid var(--sidebar-line);
+  border-radius: var(--radius-md);
+  max-height: 280px;
+  overflow-y: auto;
+}
+.sidebar-switcher-form {
+  margin: 0;
+}
+.sidebar-switcher-item {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  color: var(--sidebar-text-muted);
+  font-family: var(--font-body);
+  font-size: 13px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.sidebar-switcher-item:hover {
+  background: var(--sidebar-hover);
+  color: var(--sidebar-text);
+}
+.sidebar-switcher-item.is-active {
+  background: var(--violet-soft-2);
+  color: var(--violet);
+  font-weight: 600;
+}
+.sidebar-switcher-sep {
+  height: 1px;
+  background: var(--sidebar-line);
+  margin: 4px 4px;
+}
+
+/* ---- Sidebar nav group divider (Service Modules etc.) ---- */
+.sidebar-nav-group {
+  padding: 18px 12px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sidebar-text-muted);
+  opacity: 0.7;
+  border-top: 1px solid var(--sidebar-line);
+  margin-top: 8px;
+}
+
+/* ---- Guide-only nav tag (small "Guide" badge) ---- */
+.sidebar-nav-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--sidebar-text-muted);
+  background: var(--sidebar-hover);
+  padding: 2px 6px;
+  border-radius: var(--radius-pill);
+}
+
+/* SVG icons inside nav inherit currentColor */
+.sidebar-nav-icon svg {
+  display: block;
+}
+
+/* ---- Topbar hamburger (hidden on desktop) ---- */
+.topbar-menu {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  color: var(--fg);
+  cursor: pointer;
+  margin-right: 4px;
+}
+.topbar-menu:hover {
+  background: var(--surface-hover);
+}
+
+/* ---- Mobile drawer mechanism (pure CSS, no JS) ---- */
+.drawer-toggle {
+  display: none;
+}
+.drawer-backdrop {
+  display: none;
+}
+
+/* ---- Footer ---- */
+.footer {
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  margin-top: auto;
+}
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 32px;
+  flex-wrap: wrap;
+}
+.footer-links {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.footer-links a {
+  font-size: 13px;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.12s;
+}
+.footer-links a:hover {
+  color: var(--fg);
+}
+.footer-copy {
+  font-size: 12px;
+  color: var(--muted-2);
+}
+
+/* Make .main a flex column so footer sits at bottom */
+.main {
+  display: flex;
+  flex-direction: column;
+}
+.content {
+  flex: 1;
+}
+
+/* ============================================================
+   Mobile responsive: replace the old .sidebar { display: none }
+   with a proper off-canvas drawer that slides in.
+   ============================================================ */
+@media (max-width: 900px) {
+  .shell {
+    grid-template-columns: 1fr;
   }
   .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    max-width: 84vw;
+    height: 100vh;
+    z-index: 60;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: 8px 0 24px rgba(0, 0, 0, 0.18);
+    display: flex; /* override the old display:none */
+  }
+  .drawer-toggle:checked ~ .sidebar {
+    transform: translateX(0);
+  }
+  .drawer-toggle:checked ~ .drawer-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 50;
+    cursor: pointer;
+  }
+  .topbar-menu {
+    display: inline-flex;
+  }
+  .topbar-user-name {
     display: none;
   }
-  .content {
-    padding: 16px;
+  .footer-inner {
+    padding: 14px 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
   }
-  .topbar {
-    padding: 0 16px;
+}
+
+@media (max-width: 480px) {
+  .topbar-title {
+    font-size: 15px;
+    max-width: 50%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  .field-grid {
-    grid-template-columns: 1fr;
+  .footer-links {
+    gap: 12px;
   }
 }

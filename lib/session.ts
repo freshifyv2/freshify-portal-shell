@@ -1,6 +1,12 @@
 import { cookies } from "next/headers";
 
 export const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME || "sp_session";
+export const ACTIVE_TENANT_COOKIE = "sp_active_tenant";
+
+/** Returns the operator's chosen tenant scope, if any. */
+export function readActiveTenant(): string | null {
+  return cookies().get(ACTIVE_TENANT_COOKIE)?.value ?? null;
+}
 
 export interface SessionClaims {
   userId: string;

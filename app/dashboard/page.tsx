@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { readSessionToken, decodeClaims } from "@/lib/session";
 import { Chrome } from "@/lib/Chrome";
+import { loadChromeContext } from "@/lib/chromeContext";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ function handleFromEmail(email?: string | null): string {
   return email.split("@")[0] || email;
 }
 
-export default function Dashboard() {
+export default async function Dashboard() {
   const token = readSessionToken();
   if (!token) redirect("/login");
 
