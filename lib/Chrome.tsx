@@ -7,6 +7,7 @@
  * - Module groups: Foundation (Dashboard / Companies / Workspaces / Users) and Service (Projects / Tasks / Reports — guide-only)
  * - Account entry in sidebar; topbar avatar links here too
  * - Generic footer with Privacy / Terms / Support / Status / About / © year
+ * - Logout modal (UAM08): CSS-only checkbox toggle, no client JS
  *
  * No client JS dependency for the drawer — uses a sibling-selector CSS pattern keyed off a hidden checkbox.
  */
@@ -125,6 +126,12 @@ const IconReports = (
 );
 const IconLogout = (
   <svg viewBox="0 0 24 24" width="18" height="18" {...stroke}>
+    <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" />
+    <path d="M10 17l-5-5 5-5M5 12h12" />
+  </svg>
+);
+const IconLogoutLg = (
+  <svg viewBox="0 0 24 24" width="24" height="24" {...stroke}>
     <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" />
     <path d="M10 17l-5-5 5-5M5 12h12" />
   </svg>
@@ -256,11 +263,56 @@ export function Chrome({
   const isOperator = Boolean(user.isOperator);
   const visibleNav = NAV_ITEMS.filter((it) => !it.operatorOnly || isOperator);
 
+  const displayName = user.displayName ?? "Signed in";
+  const handle = user.handle ?? "";
+
   return (
     <div className="shell">
-      {/* Hidden checkbox drives mobile drawer open/close — no client JS needed */}
+      {/* Hidden checkbox — mobile drawer open/close */}
       <input type="checkbox" id="drawer-toggle" className="drawer-toggle" aria-hidden />
       <label htmlFor="drawer-toggle" className="drawer-backdrop" aria-hidden />
+
+      {/* Hidden checkbox — logout modal */}
+      <input type="checkbox" id="logout-modal" className="modal-toggle" aria-hidden />
+      <label htmlFor="logout-modal" className="modal-backdrop" aria-hidden />
+
+      {/* LOGOUT MODAL (UAM08) */}
+      <div className="modal" role="dialog" aria-modal="true" aria-labelledby="logout-modal-title">
+        <div className="modal-icon-circle" aria-hidden>{IconLogoutLg}</div>
+        <h2 className="modal-header-title" id="logout-modal-title">
+          Log Out of Sovereign Portal?
+        </h2>
+        <p className="modal-header-sub">
+          You&apos;ll be returned to the sign-in screen. Your data and settings are safely saved.
+        </p>
+
+        {/* User identity sub-card */}
+        <div className="user-mini-card">
+          <span
+            className="avatar-circle"
+            aria-hidden
+            style={{ background: "var(--violet-soft)", color: "var(--violet)" }}
+          >
+            {initials(displayName)}
+          </span>
+          <div className="user-mini-card-info">
+            <p className="user-mini-card-name">{displayName}</p>
+            {handle && <p className="user-mini-card-handle">@{handle}</p>}
+          </div>
+          <span className="status-pill is-active" style={{ flexShrink: 0 }}>Active</span>
+        </div>
+
+        <div className="modal-actions">
+          <label htmlFor="logout-modal" className="btn btn-ghost" style={{ cursor: "pointer" }}>
+            Cancel
+          </label>
+          <form action="/api/logout" method="post" style={{ margin: 0 }}>
+            <button type="submit" className="btn btn-primary">
+              Log out
+            </button>
+          </form>
+        </div>
+      </div>
 
       <aside className="sidebar">
         <div className="sidebar-logo">
@@ -296,12 +348,11 @@ export function Chrome({
         </nav>
 
         <div className="sidebar-footer">
-          <form action="/api/logout" method="post" className="sidebar-logout-form">
-            <button type="submit" className="sidebar-logout">
-              <span className="sidebar-nav-icon" aria-hidden>{IconLogout}</span>
-              <span>Log Out</span>
-            </button>
-          </form>
+          {/* Log Out — triggers modal instead of direct form submit */}
+          <label htmlFor="logout-modal" className="sidebar-logout" style={{ cursor: "pointer" }}>
+            <span className="sidebar-nav-icon" aria-hidden>{IconLogout}</span>
+            <span>Log Out</span>
+          </label>
         </div>
       </aside>
 
