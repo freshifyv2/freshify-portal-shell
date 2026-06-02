@@ -1,15 +1,22 @@
 /**
- * Sovereign Portal shell chrome — Portal v3
+ * Sovereign Portal shell chrome — Portal v3 (Stage 6 Deploy 2)
  *
  * - Dark sidebar (collapses to off-canvas drawer < 900px)
- * - Tenant switcher: operator → all companies + "All Companies"; non-operator → disabled chip showing own company
+ * - Tenant switcher: two-section operator dropdown
+ *     • OPERATOR SCOPE — "All Companies" virtual aggregate scope
+ *     • IMPERSONATE — per-tenant company entries
+ *   Non-operators see a disabled chip showing their own company.
+ *   Operator-mode badge surfaces in the switcher summary AND the topbar
+ *   when actively impersonating a tenant.
  * - Generic SVG icons next to each module name
- * - Module groups: Foundation (Dashboard / Companies / Workspaces / Users) and Service (Projects / Tasks / Reports — guide-only)
+ * - Module groups: Foundation (Dashboard / Companies / Workspaces / Users) and
+ *   Service (Projects / Tasks / Reports — guide-only)
  * - Account entry in sidebar; topbar avatar links here too
  * - Generic footer with Privacy / Terms / Support / Status / About / © year
  * - Logout modal (UAM08): CSS-only checkbox toggle, no client JS
  *
- * No client JS dependency for the drawer — uses a sibling-selector CSS pattern keyed off a hidden checkbox.
+ * No client JS dependency for the drawer — uses a sibling-selector CSS pattern
+ * keyed off a hidden checkbox.
  */
 
 import type { ReactNode } from "react";
@@ -152,6 +159,12 @@ const IconMenu = (
     <path d="M4 7h16M4 12h16M4 17h16" />
   </svg>
 );
+const IconShield = (
+  <svg viewBox="0 0 24 24" width="12" height="12" {...stroke}>
+    <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z" />
+    <path d="M9 12l2 2 4-4" />
+  </svg>
+);
 
 const NAV_ITEMS: NavItem[] = [
   { key: "dashboard", label: "Dashboard", href: "/dashboard", icon: IconDashboard },
@@ -182,13 +195,15 @@ function TenantSwitcher({
   activeCompany?: { companyId?: string; name: string } | null;
   tenantOptions: TenantOption[];
 }) {
-  const label = activeCompany?.name ?? (isOperator ? "All Companies" : "Sovereign Portal");
+  const isImpersonating = isOperator && Boolean(activeCompany?.companyId);
+  const aggregateLabel = "All Companies";
+  const summaryLabel = activeCompany?.name ?? (isOperator ? aggregateLabel : "Sovereign Portal");
 
   if (!isOperator) {
     // Non-operator: visible but disabled chip
     return (
       <div className="sidebar-switcher is-disabled" aria-disabled="true" title="Locked to your company">
-        <span className="sidebar-switcher-label">{label}</span>
+        <span className="sidebar-switcher-label">{summaryLabel}</span>
         <span className="sidebar-switcher-chevron" aria-hidden>
           {IconChevron}
         </span>
@@ -196,16 +211,26 @@ function TenantSwitcher({
     );
   }
 
-  // Operator: details/summary for a no-JS pure-CSS dropdown
+  // Operator: details/summary for a no-JS pure-CSS dropdown.
+  // Two sections: OPERATOR SCOPE (All Companies) + IMPERSONATE (per-tenant).
   return (
     <details className="sidebar-switcher-details">
       <summary className="sidebar-switcher">
-        <span className="sidebar-switcher-label">{label}</span>
+        <span className="sidebar-switcher-summary-text">
+          <span className="sidebar-switcher-label">{summaryLabel}</span>
+          {isImpersonating && (
+            <span className="sidebar-switcher-mode-badge" aria-label="Operator impersonating">
+              {IconShield}
+              <span>OPERATOR MODE</span>
+            </span>
+          )}
+        </span>
         <span className="sidebar-switcher-chevron" aria-hidden>
           {IconChevron}
         </span>
       </summary>
       <div className="sidebar-switcher-menu" role="menu">
+        <div className="sidebar-switcher-section-label">Operator scope</div>
         <form action="/api/admin/active-tenant" method="post" className="sidebar-switcher-form">
           <button
             type="submit"
@@ -213,22 +238,30 @@ function TenantSwitcher({
             value=""
             className={`sidebar-switcher-item ${!activeCompany?.companyId ? "is-active" : ""}`}
           >
-            All Companies
+            <span className="sidebar-switcher-item-dot is-aggregate" aria-hidden />
+            <span>All Companies</span>
+            <span className="sidebar-switcher-item-hint">Aggregate</span>
           </button>
         </form>
-        <div className="sidebar-switcher-sep" />
-        {tenantOptions.map((t) => (
-          <form key={t.companyId} action="/api/admin/active-tenant" method="post" className="sidebar-switcher-form">
-            <button
-              type="submit"
-              name="companyId"
-              value={t.companyId}
-              className={`sidebar-switcher-item ${activeCompany?.companyId === t.companyId ? "is-active" : ""}`}
-            >
-              {t.name}
-            </button>
-          </form>
-        ))}
+
+        <div className="sidebar-switcher-section-label">Impersonate</div>
+        {tenantOptions.length === 0 ? (
+          <div className="sidebar-switcher-empty">No tenants available</div>
+        ) : (
+          tenantOptions.map((t) => (
+            <form key={t.companyId} action="/api/admin/active-tenant" method="post" className="sidebar-switcher-form">
+              <button
+                type="submit"
+                name="companyId"
+                value={t.companyId}
+                className={`sidebar-switcher-item ${activeCompany?.companyId === t.companyId ? "is-active" : ""}`}
+              >
+                <span className="sidebar-switcher-item-dot" aria-hidden />
+                <span>{t.name}</span>
+              </button>
+            </form>
+          ))
+        )}
       </div>
     </details>
   );
@@ -261,6 +294,7 @@ export function Chrome({
   children,
 }: ChromeProps) {
   const isOperator = Boolean(user.isOperator);
+  const isImpersonating = isOperator && Boolean(activeCompany?.companyId);
   const visibleNav = NAV_ITEMS.filter((it) => !it.operatorOnly || isOperator);
 
   const displayName = user.displayName ?? "Signed in";
@@ -361,7 +395,15 @@ export function Chrome({
           <label htmlFor="drawer-toggle" className="topbar-menu" aria-label="Open menu">
             {IconMenu}
           </label>
-          <h1 className="topbar-title">{pageTitle}</h1>
+          <div className="topbar-title-wrap">
+            <h1 className="topbar-title">{pageTitle}</h1>
+            {isImpersonating && (
+              <span className="topbar-op-badge" aria-label="Operator impersonating">
+                {IconShield}
+                <span>OPERATOR MODE · {activeCompany?.name}</span>
+              </span>
+            )}
+          </div>
           <div className="topbar-actions">
             <button type="button" className="topbar-bell" aria-label="Notifications">
               {IconBell}

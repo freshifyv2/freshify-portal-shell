@@ -3,7 +3,7 @@
    ============================================================
    Visual language: RAS Logistics screens, with Freshify violet
    replacing RAS red. Dark navy sidebar, white topbar, light
-   surface content. Inter (display + body).
+   surface content. Geist Sans (display + body).
 
    Components rebuilt against RAS Figma reference:
    - Dark sidebar with brand mark + dropdown switcher
@@ -15,7 +15,7 @@
    - Hero card pattern + PROFILE/SETTINGS tabs (violet underline)
    ============================================================ */
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&display=swap");
 
 :root {
   /* Light surface palette (content area) */
@@ -84,8 +84,8 @@
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
 
   /* Typography */
-  --font-display: "Inter", system-ui, -apple-system, sans-serif;
-  --font-body: "Inter", system-ui, -apple-system, sans-serif;
+  --font-display: "Geist", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: "Geist", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 
   /* Layout */
   --sidebar-width: 232px;
@@ -2604,4 +2604,147 @@ button {
   background: var(--surface-2);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
+}
+
+/* =========================================================================
+   Operator-mode UI — Stage 6 Deploy 2
+   Two-section tenant switcher (OPERATOR SCOPE / IMPERSONATE) + topbar badge.
+   ========================================================================= */
+
+/* Switcher summary: side-by-side label + tiny mode badge */
+.sidebar-switcher-summary-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.sidebar-switcher-summary-text .sidebar-switcher-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-switcher-mode-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(108, 71, 255, 0.18);
+  color: #c9b9ff;
+  border: 1px solid rgba(108, 71, 255, 0.45);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sidebar-switcher-mode-badge svg {
+  color: inherit;
+}
+
+/* Section labels in the operator switcher menu */
+.sidebar-switcher-section-label {
+  padding: 8px 12px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sidebar-muted, rgba(255, 255, 255, 0.45));
+}
+
+.sidebar-switcher-section-label:not(:first-child) {
+  margin-top: 4px;
+  border-top: 1px solid var(--sidebar-line, rgba(255, 255, 255, 0.08));
+}
+
+/* Tenant item dot + hint */
+.sidebar-switcher-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.sidebar-switcher-item-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.35);
+  flex-shrink: 0;
+}
+
+.sidebar-switcher-item.is-active .sidebar-switcher-item-dot {
+  background: var(--violet, #6c47ff);
+  box-shadow: 0 0 0 3px rgba(108, 71, 255, 0.2);
+}
+
+.sidebar-switcher-item-dot.is-aggregate {
+  background: #00d4ff;
+}
+
+.sidebar-switcher-item-hint {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--sidebar-muted, rgba(255, 255, 255, 0.45));
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.sidebar-switcher-empty {
+  padding: 8px 12px 12px;
+  font-size: 12px;
+  color: var(--sidebar-muted, rgba(255, 255, 255, 0.45));
+  font-style: italic;
+}
+
+/* Topbar — title with adjacent operator-mode pill */
+.topbar-title-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.topbar-title-wrap .topbar-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-op-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(108, 71, 255, 0.10);
+  color: #5b3ce6;
+  border: 1px solid rgba(108, 71, 255, 0.30);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.topbar-op-badge svg {
+  color: inherit;
+}
+
+@media (max-width: 640px) {
+  .topbar-op-badge span:last-child {
+    display: none;
+  }
 }
