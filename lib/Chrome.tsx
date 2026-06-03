@@ -20,6 +20,7 @@
  */
 
 import type { ReactNode } from "react";
+import { ThemeToggle } from "./ThemeToggle";
 
 export type ActiveSection =
   | "dashboard"
@@ -27,6 +28,7 @@ export type ActiveSection =
   | "workspaces"
   | "users"
   | "account"
+  | "portal-settings"
   | "projects"
   | "tasks"
   | "reports"
@@ -171,6 +173,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "companies", label: "Companies", href: "/dashboard/companies", icon: IconCompanies },
   { key: "workspaces", label: "Workspaces", href: "/dashboard/workspaces", icon: IconWorkspaces },
   { key: "users", label: "Users", href: "/dashboard/users/list", icon: IconUsers, operatorOnly: true },
+  { key: "portal-settings", label: "Portal Settings", href: "/dashboard/portal-settings", icon: IconShield, operatorOnly: true },
   { key: "account", label: "Account", href: "/dashboard/users/account", icon: IconAccount },
   // Service modules — guide-only, separated by divider
   { key: "projects", label: "Projects", href: "/dashboard/projects", icon: IconProjects, guideOnly: true, groupStart: "Service Modules" },
@@ -405,6 +408,7 @@ export function Chrome({
             )}
           </div>
           <div className="topbar-actions">
+            <ThemeToggle />
             <button type="button" className="topbar-bell" aria-label="Notifications">
               {IconBell}
               <span className="topbar-bell-dot" aria-hidden />

@@ -1,9 +1,50 @@
+/**
+ * UAM01 — Dashboard (operator-aware).
+ *
+ * For operators: aggregate metric cards (real counts), outstanding invites,
+ * and quick links into the sovereign modules.
+ * For tenants: greeting + their session context.
+ */
+import { headers } from "next/headers";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { readSessionToken, decodeClaims } from "@/lib/session";
 import { Chrome } from "@/lib/Chrome";
 import { loadChromeContext } from "@/lib/chromeContext";
 
 export const dynamic = "force-dynamic";
+
+const USERS_URL = process.env.USERS_SERVICE_URL || "https://freshify-users-sbzaekoo4q-uc.a.run.app";
+const COMPANIES_URL = process.env.COMPANIES_SERVICE_URL || "https://freshify-companies-sbzaekoo4q-uc.a.run.app";
+const WORKSPACES_URL = process.env.WORKSPACES_SERVICE_URL || "https://freshify-workspaces-sbzaekoo4q-uc.a.run.app";
+
+interface UsersStats {
+  total: number;
+  active: number;
+  pending: number;
+  inactive: number;
+  operators: number;
+}
+interface CompaniesStats {
+  total: number;
+  active: number;
+  inactive: number;
+}
+interface WorkspacesStats {
+  total: number;
+  byType?: Record<string, number>;
+}
+interface PortalInvite {
+  inviteId: string;
+  email: string;
+  companyId: string | null;
+  workspaceId: string | null;
+  role: string;
+  invitedBy: string;
+  createdAt: string;
+  expiresAt: string;
+  status: string;
+}
 
 function greeting(): string {
   const h = new Date().getHours();
@@ -16,6 +57,34 @@ function handleFromEmail(email?: string | null): string {
   if (!email) return "user";
   if (email.startsWith("+")) return email.replace(/[^0-9]/g, "");
   return email.split("@")[0] || email;
+}
+
+async function fetchJSON<T>(url: string, token: string): Promise<T | null> {
+  try {
+    const r = await fetch(url, {
+      headers: { authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    if (!r.ok) return null;
+    return (await r.json()) as T;
+  } catch {
+    return null;
+  }
+}
+
+function relativeTime(iso?: string | null): string {
+  if (!iso) return "—";
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return "—";
+  const delta = Date.now() - then;
+  const mins = Math.round(delta / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 export default async function Dashboard() {
@@ -35,22 +104,35 @@ export default async function Dashboard() {
     ? Math.max(0, Math.round((claims.exp * 1000 - Date.now()) / (1000 * 60 * 60 * 24)))
     : null;
 
+  // Operator-only aggregate fetches.
+  let usersStats: UsersStats | null = null;
+  let companiesStats: CompaniesStats | null = null;
+  let workspacesStats: WorkspacesStats | null = null;
+  let invites: PortalInvite[] = [];
+  if (isOperator) {
+    const [u, c, w, i] = await Promise.all([
+      fetchJSON<UsersStats>(`${USERS_URL}/v1/admin/users-stats`, token),
+      fetchJSON<CompaniesStats>(`${COMPANIES_URL}/v1/admin/companies/stats`, token),
+      fetchJSON<WorkspacesStats>(`${WORKSPACES_URL}/v1/admin/workspaces/stats`, token),
+      fetchJSON<{ invites: PortalInvite[] }>(`${USERS_URL}/v1/portal-invites`, token),
+    ]);
+    usersStats = u;
+    companiesStats = c;
+    workspacesStats = w;
+    invites = i?.invites || [];
+  }
+
   return (
     <Chrome
       active="dashboard"
       pageTitle="Dashboard"
-      user={chromeCtx?.user ?? {
-        userId: claims.userId,
-        displayName,
-        handle,
-        isOperator,
-      }}
+      user={chromeCtx?.user ?? { userId: claims.userId, displayName, handle, isOperator }}
       activeCompany={chromeCtx?.activeCompany ?? (claims.companyName ? { name: claims.companyName } : null)}
       tenantOptions={chromeCtx?.tenantOptions ?? []}
     >
       <h1 className="page-greeting">{`${greeting()} ${firstName}!`}</h1>
 
-      {/* RAS metric row — icon-chip LEFT, badge TOP-RIGHT, label, BIG NUMBER */}
+      {/* Aggregate metric row */}
       <div className="metrics-row">
         <div className="metric-card">
           <div className="metric-card-top">
@@ -58,36 +140,36 @@ export default async function Dashboard() {
             <span className="metric-card-badge is-violet">{isOperator ? "ALL ACCESS" : "ACTIVE"}</span>
           </div>
           <div className="metric-card-body">
-            <p className="metric-card-label">Companies</p>
-            <p className="metric-card-value">{isOperator ? "4" : "—"}</p>
+            <p className="metric-card-label">Customers</p>
+            <p className="metric-card-value">{isOperator ? (companiesStats?.total ?? "—") : "—"}</p>
           </div>
         </div>
 
         <div className="metric-card">
           <div className="metric-card-top">
-            <span className="metric-card-icon is-cyan" aria-hidden>◉</span>
+            <span className="metric-card-icon" aria-hidden>◉</span>
             <span className="metric-card-badge is-violet">{isOperator ? "ALL ACCESS" : "AVAILABLE"}</span>
           </div>
           <div className="metric-card-body">
             <p className="metric-card-label">Workspaces</p>
-            <p className="metric-card-value">{isOperator ? "8" : "—"}</p>
+            <p className="metric-card-value">{isOperator ? (workspacesStats?.total ?? "—") : "—"}</p>
           </div>
         </div>
 
         <div className="metric-card">
           <div className="metric-card-top">
-            <span className="metric-card-icon is-green" aria-hidden>◐</span>
+            <span className="metric-card-icon" aria-hidden>◐</span>
             <span className="metric-card-badge">{isOperator ? "ALL ACCESS" : "MEMBER"}</span>
           </div>
           <div className="metric-card-body">
             <p className="metric-card-label">Users</p>
-            <p className="metric-card-value">{isOperator ? "16" : "—"}</p>
+            <p className="metric-card-value">{isOperator ? (usersStats?.total ?? "—") : "—"}</p>
           </div>
         </div>
 
         <div className="metric-card">
           <div className="metric-card-top">
-            <span className="metric-card-icon is-amber" aria-hidden>◔</span>
+            <span className="metric-card-icon" aria-hidden>◔</span>
             <span className="metric-card-badge">ACTIVE</span>
           </div>
           <div className="metric-card-body">
@@ -99,21 +181,67 @@ export default async function Dashboard() {
         <div className="metric-card">
           <div className="metric-card-top">
             <span className="metric-card-icon" aria-hidden>◧</span>
-            <span className="metric-card-badge is-gray">SMI v0.1</span>
+            <span className="metric-card-badge is-gray">SMI v0.2</span>
           </div>
           <div className="metric-card-body">
             <p className="metric-card-label">Module spec</p>
-            <p className="metric-card-value">v0.1</p>
+            <p className="metric-card-value">v0.2</p>
           </div>
         </div>
       </div>
 
-      {/* RAS 2x2 list cards */}
+      {/* Operator-only: outstanding invites */}
+      {isOperator && (
+        <div className="list-card" style={{ marginBottom: 20 }}>
+          <div className="list-card-header">
+            <h3 className="list-card-title">Outstanding Invites</h3>
+            <span className="user-cell-handle">{invites.length} pending</span>
+          </div>
+          <div className="list-card-body">
+            {invites.length === 0 ? (
+              <p style={{ color: "var(--muted)", margin: 0, padding: 16 }}>
+                No outstanding invites. Mint a new one from the Users module.
+              </p>
+            ) : (
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Email</th>
+                    <th>Scope</th>
+                    <th>Role</th>
+                    <th>Created</th>
+                    <th>Expires</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invites.slice(0, 10).map((iv) => (
+                    <tr key={iv.inviteId}>
+                      <td><strong>{iv.email}</strong></td>
+                      <td>
+                        {iv.companyId
+                          ? <span className="pill is-violet">Company</span>
+                          : iv.workspaceId
+                            ? <span className="pill is-violet">Workspace</span>
+                            : <span className="pill is-gray">Portal</span>}
+                      </td>
+                      <td>{iv.role}</td>
+                      <td>{relativeTime(iv.createdAt)}</td>
+                      <td>{relativeTime(iv.expiresAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 2x list cards */}
       <div className="lists-grid">
         <div className="list-card">
           <div className="list-card-header">
             <h3 className="list-card-title">Active Session</h3>
-            <a href="/dashboard/users/account" className="list-card-link">View account →</a>
+            <Link href="/dashboard/users/account" className="list-card-link">View account →</Link>
           </div>
           <div className="list-card-body">
             <table className="data-table">
@@ -130,7 +258,7 @@ export default async function Dashboard() {
                   </td>
                 </tr>
                 <tr>
-                  <td style={{ color: "var(--muted)", fontSize: 13 }}>ACTIVE COMPANY</td>
+                  <td style={{ color: "var(--muted)", fontSize: 13 }}>ACTIVE CUSTOMER</td>
                   <td>{claims.companyName || <span className="muted">—</span>}</td>
                 </tr>
                 <tr>
@@ -141,9 +269,7 @@ export default async function Dashboard() {
                   <td style={{ color: "var(--muted)", fontSize: 13 }}>ROLE</td>
                   <td>
                     <span className="pill is-violet">{claims.roles?.[0]?.role || "member"}</span>
-                    {isOperator && (
-                      <span className="pill is-green" style={{ marginLeft: 8 }}>operator</span>
-                    )}
+                    {isOperator && <span className="pill is-violet" style={{ marginLeft: 8 }}>operator</span>}
                   </td>
                 </tr>
               </tbody>
@@ -154,40 +280,49 @@ export default async function Dashboard() {
         <div className="list-card">
           <div className="list-card-header">
             <h3 className="list-card-title">Sovereign Modules</h3>
-            <a href="/dashboard/companies" className="list-card-link">Open Companies →</a>
+            <Link href="/dashboard/companies" className="list-card-link">Open Customers →</Link>
           </div>
           <div className="list-card-body">
             <table className="data-table">
               <tbody>
-                <tr className="is-clickable" onClick={undefined}>
+                <tr>
                   <td>
-                    <a href="/dashboard/companies" className="data-table-strong" style={{ color: "var(--fg)" }}>Companies</a>
-                    <div className="data-table-sub">Sovereign tenant module</div>
+                    <Link href="/dashboard/companies" className="data-table-strong" style={{ color: "var(--fg)" }}>Customers</Link>
+                    <div className="data-table-sub">Sovereign tenant module (UCM)</div>
                   </td>
                   <td><span className="status-pill is-active">Live</span></td>
                 </tr>
                 <tr>
                   <td>
-                    <a href="/dashboard/workspaces" className="data-table-strong" style={{ color: "var(--fg)" }}>Workspaces</a>
-                    <div className="data-table-sub">Per-tenant workspace module</div>
+                    <Link href="/dashboard/workspaces" className="data-table-strong" style={{ color: "var(--fg)" }}>Workspaces</Link>
+                    <div className="data-table-sub">Per-customer workspace module (WSM)</div>
                   </td>
                   <td><span className="status-pill is-active">Live</span></td>
                 </tr>
                 <tr>
                   <td>
-                    <a href="/dashboard/users/account" className="data-table-strong" style={{ color: "var(--fg)" }}>Users</a>
-                    <div className="data-table-sub">Identity + auth module</div>
+                    <Link href="/dashboard/users/account" className="data-table-strong" style={{ color: "var(--fg)" }}>Users</Link>
+                    <div className="data-table-sub">Identity + auth module (URM)</div>
                   </td>
                   <td><span className="status-pill is-active">Live</span></td>
                 </tr>
                 {isOperator && (
-                  <tr>
-                    <td>
-                      <a href="/dashboard/users/list" className="data-table-strong" style={{ color: "var(--fg)" }}>Users (cross-tenant)</a>
-                      <div className="data-table-sub">Operator-only view</div>
-                    </td>
-                    <td><span className="status-pill is-active">Live</span></td>
-                  </tr>
+                  <>
+                    <tr>
+                      <td>
+                        <Link href="/dashboard/users/list" className="data-table-strong" style={{ color: "var(--fg)" }}>Users (cross-tenant)</Link>
+                        <div className="data-table-sub">Operator-only directory</div>
+                      </td>
+                      <td><span className="status-pill is-active">Live</span></td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <Link href="/dashboard/portal-settings" className="data-table-strong" style={{ color: "var(--fg)" }}>Portal Settings</Link>
+                        <div className="data-table-sub">Branding, comms, auth, catalog</div>
+                      </td>
+                      <td><span className="status-pill is-active">Live</span></td>
+                    </tr>
+                  </>
                 )}
               </tbody>
             </table>

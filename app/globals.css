@@ -92,6 +92,71 @@
   --topbar-height: 72px;
 }
 
+/* ============================================================
+   DARK MODE OVERLAY — Portal v3 Deploy 4
+   ============================================================
+   Applied via [data-theme="dark"] on <html>. ThemeProvider in
+   the layout reads the cookie/localStorage preference and sets
+   this attribute before first paint to avoid flash.
+
+   Restricted palette discipline (per design rules): black,
+   purple, grey, beige only. NO red/green/yellow/amber even in
+   dark mode — status pills use neutral greys/violet variants.
+   ============================================================ */
+
+[data-theme="dark"] {
+  /* Light surface palette inverts: dark canvas, slightly lighter cards */
+  --bg: #0a0a0f;
+  --surface: #15151c;
+  --surface-2: #1c1c25;
+  --surface-hover: #1f1f29;
+  --line: #2a2a35;
+  --line-strong: #3a3a48;
+  --fg: #e8e8ec;
+  --fg-2: #d4d4d8;
+  --muted: #a1a1aa;
+  --muted-2: #71717a;
+
+  /* Sidebar stays dark (already dark in light mode) but slightly deeper to
+     differentiate from content surfaces */
+  --sidebar-bg: #08080c;
+  --sidebar-bg-2: #12121a;
+  --sidebar-text: #e4e4e7;
+  --sidebar-text-muted: #a1a1aa;
+  --sidebar-hover: rgba(255, 255, 255, 0.08);
+  --sidebar-line: rgba(255, 255, 255, 0.06);
+
+  /* Violet accents shift slightly brighter for dark backgrounds */
+  --violet: #8a6bff;
+  --violet-2: #6c47ff;
+  --violet-soft: rgba(138, 107, 255, 0.16);
+  --violet-soft-2: rgba(138, 107, 255, 0.24);
+  --violet-tint: rgba(138, 107, 255, 0.12);
+  --violet-text: #b094ff;
+  --cyan: #38c2e8;
+  --cyan-soft: rgba(56, 194, 232, 0.16);
+
+  /* Beige accent for warmer surfaces in dark mode */
+  --beige: #d4c5a9;
+  --beige-soft: rgba(212, 197, 169, 0.12);
+
+  color-scheme: dark;
+}
+
+/* Smooth theme transitions on the major surfaces. Keep narrow — don't
+   transition every property or interactions feel mushy. */
+html,
+body,
+.shell,
+.sidebar,
+.topbar,
+.content,
+.card,
+.metric-card,
+.list-card {
+  transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -365,6 +430,31 @@ button {
 
 .topbar-bell:hover {
   background: var(--surface-hover);
+}
+
+/* Theme toggle — same circular size/shape as the bell for visual rhythm */
+.topbar-theme-toggle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: transparent;
+  border: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-2);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.topbar-theme-toggle:hover {
+  background: var(--surface-hover);
+  color: var(--violet);
+}
+
+.topbar-theme-toggle:focus-visible {
+  outline: 2px solid var(--violet);
+  outline-offset: 2px;
 }
 
 .topbar-bell-dot {
