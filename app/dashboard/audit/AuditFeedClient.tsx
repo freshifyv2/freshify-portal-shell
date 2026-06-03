@@ -26,7 +26,39 @@ export interface AuditEntry {
 
 type Filter = "all" | AuditSource;
 
+// Event-type quick filter — keyed by the prefix sent to the backend.
+// "" means no event filter. The labels are operator-facing.
+interface EventPreset {
+  value: string;
+  label: string;
+}
+const EVENT_PRESETS: EventPreset[] = [
+  { value: "", label: "All events" },
+  { value: "portal.invite_", label: "Invites" },
+  { value: "portal.admin_user_", label: "Admin users" },
+  { value: "portal.settings_", label: "Portal settings" },
+  { value: "company.", label: "Customer events" },
+  { value: "workspace.", label: "Workspace events" },
+];
+
 const PAGE_SIZE = 50;
+
+// Local YYYY-MM-DD -> ISO at local midnight (start of day) or local next-day
+// midnight (exclusive end). Returning undefined when the input is empty so
+// it omits the param from the query.
+function dateInputToIsoStart(v: string): string | undefined {
+  if (!v) return undefined;
+  const d = new Date(`${v}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return undefined;
+  return d.toISOString();
+}
+function dateInputToIsoEndExclusive(v: string): string | undefined {
+  if (!v) return undefined;
+  const d = new Date(`${v}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return undefined;
+  d.setDate(d.getDate() + 1);
+  return d.toISOString();
+}
 
 function relativeTime(iso: string): string {
   const then = new Date(iso).getTime();
@@ -49,6 +81,25 @@ function relativeTime(iso: string): string {
 function sourceLabel(s: AuditSource): string {
   return s === "company" ? "Customer" : s === "workspace" ? "Workspace" : "Portal";
 }
+
+const filterLabelStyle: React.CSSProperties = {
+  display: "inline-flex",
+  flexDirection: "column",
+  gap: 4,
+  fontSize: 11,
+  color: "var(--muted)",
+  textTransform: "uppercase",
+  letterSpacing: "0.04em",
+};
+const filterControlStyle: React.CSSProperties = {
+  padding: "6px 10px",
+  background: "var(--surface-2)",
+  color: "var(--fg)",
+  border: "1px solid var(--line)",
+  borderRadius: 6,
+  fontSize: 13,
+  fontFamily: "inherit",
+};
 
 function eventSummary(entry: AuditEntry): string {
   const ev = entry.event;
@@ -100,6 +151,9 @@ export function AuditFeedClient({ initialEntries, initialCursor }: Props) {
   const [filter, setFilter] = useState<Filter>("all");
   const [actorDraft, setActorDraft] = useState("");
   const [actor, setActor] = useState<string>("");
+  const [eventPrefix, setEventPrefix] = useState<string>("");
+  const [fromDate, setFromDate] = useState<string>("");
+  const [toDate, setToDate] = useState<string>("");
   const [entries, setEntries] = useState<AuditEntry[]>(initialEntries);
   const [cursor, setCursor] = useState<string | null>(initialCursor);
   const [loading, setLoading] = useState(false);
@@ -116,6 +170,11 @@ export function AuditFeedClient({ initialEntries, initialCursor }: Props) {
       const qs = new URLSearchParams({ limit: String(PAGE_SIZE) });
       if (filter !== "all") qs.set("source", filter);
       if (actor) qs.set("actorUserId", actor);
+      if (eventPrefix) qs.set("eventPrefix", eventPrefix);
+      const sinceIso = dateInputToIsoStart(fromDate);
+      const untilIso = dateInputToIsoEndExclusive(toDate);
+      if (sinceIso) qs.set("since", sinceIso);
+      if (untilIso) qs.set("until", untilIso);
       if (append && cursor) qs.set("cursor", cursor);
       const r = await fetch(`/api/admin/audit-feed?${qs.toString()}`, { cache: "no-store" });
       if (!r.ok) throw new Error(`request failed (${r.status})`);
@@ -131,7 +190,7 @@ export function AuditFeedClient({ initialEntries, initialCursor }: Props) {
     }
   }
 
-  // Refetch from scratch whenever the filter or applied actor changes (after first mount).
+  // Refetch from scratch whenever any active filter changes (after first mount).
   useEffect(() => {
     if (isInitial.current) {
       isInitial.current = false;
@@ -139,7 +198,19 @@ export function AuditFeedClient({ initialEntries, initialCursor }: Props) {
     }
     load({ append: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter, actor]);
+  }, [filter, actor, eventPrefix, fromDate, toDate]);
+
+  function clearAllFilters() {
+    setFilter("all");
+    setActorDraft("");
+    setActor("");
+    setEventPrefix("");
+    setFromDate("");
+    setToDate("");
+  }
+
+  const hasAnyFilter =
+    filter !== "all" || actor !== "" || eventPrefix !== "" || fromDate !== "" || toDate !== "";
 
   const chips: { key: Filter; label: string }[] = [
     { key: "all", label: "All" },
@@ -209,6 +280,69 @@ export function AuditFeedClient({ initialEntries, initialCursor }: Props) {
             </button>
           )}
         </form>
+      </div>
+
+      {/* Second filter row — event type + date range. Underline the header
+          divider so it reads as a contiguous filter strip. */}
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 12,
+          padding: "0 16px 12px",
+          alignItems: "center",
+          borderBottom: "1px solid var(--line)",
+        }}
+      >
+        <label style={filterLabelStyle}>
+          Event
+          <select
+            value={eventPrefix}
+            onChange={(e) => setEventPrefix(e.target.value)}
+            style={filterControlStyle}
+          >
+            {EVENT_PRESETS.map((p) => (
+              <option key={p.value} value={p.value}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label style={filterLabelStyle}>
+          From
+          <input
+            type="date"
+            value={fromDate}
+            max={toDate || undefined}
+            onChange={(e) => setFromDate(e.target.value)}
+            style={filterControlStyle}
+          />
+        </label>
+        <label style={filterLabelStyle}>
+          To
+          <input
+            type="date"
+            value={toDate}
+            min={fromDate || undefined}
+            onChange={(e) => setToDate(e.target.value)}
+            style={filterControlStyle}
+          />
+        </label>
+        {hasAnyFilter && (
+          <button
+            type="button"
+            onClick={clearAllFilters}
+            className="pill is-gray"
+            style={{ cursor: "pointer", border: "none", fontSize: 12, padding: "4px 10px" }}
+          >
+            Clear all
+          </button>
+        )}
+        {loading && (
+          <span style={{ color: "var(--muted)", fontSize: 12, marginLeft: "auto" }}>
+            Updating…
+          </span>
+        )}
       </div>
 
       <div className="list-card-body">
