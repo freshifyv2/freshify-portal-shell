@@ -1,17 +1,22 @@
 "use client";
 
 /**
- * ThemeToggle \u2014 topbar button that flips between light and dark.
+ * ThemeToggle — topbar control for theme mode.
  *
- * Cycles light \u2192 dark on click. If user wants "system", they can use the
- * Portal Settings UI (operator) or browser dev tools \u2014 we keep the topbar
- * binary for speed. Long-press / shift-click is not handled.
+ * Deploy 5.3 upgrades the toggle from a binary light↔dark switch to a
+ * three-state cycle:
+ *
+ *   light  → dark  → system  → light …
+ *
+ * The icon reflects the *stored mode* (sun / moon / monitor) rather than
+ * the resolved effective theme, so the user can always tell whether
+ * they've pinned a preference or deferred to the OS.
  *
  * When `allowOverride` is false (operator locked theme), the toggle hides
  * itself entirely.
  */
 
-import { useTheme } from "./ThemeProvider";
+import { useTheme, type ThemeMode } from "./ThemeProvider";
 
 const IconSun = (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -33,19 +38,44 @@ const IconMoon = (
   </svg>
 );
 
+const IconMonitor = (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <rect x="3" y="4" width="18" height="12" rx="2" />
+    <path d="M8 20h8" />
+    <path d="M12 16v4" />
+  </svg>
+);
+
+function iconFor(mode: ThemeMode) {
+  if (mode === "light") return IconSun;
+  if (mode === "dark") return IconMoon;
+  return IconMonitor;
+}
+
+function nextMode(mode: ThemeMode): ThemeMode {
+  if (mode === "light") return "dark";
+  if (mode === "dark") return "system";
+  return "light";
+}
+
+function labelFor(mode: ThemeMode): string {
+  if (mode === "light") return "Theme: light. Click to switch to dark.";
+  if (mode === "dark") return "Theme: dark. Click to follow system.";
+  return "Theme: follow system. Click to switch to light.";
+}
+
 export function ThemeToggle() {
-  const { effective, allowOverride, toggle } = useTheme();
+  const { mode, allowOverride, setMode } = useTheme();
   if (!allowOverride) return null;
-  const isDark = effective === "dark";
   return (
     <button
       type="button"
       className="topbar-theme-toggle"
-      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      aria-pressed={isDark}
-      onClick={toggle}
+      aria-label={labelFor(mode)}
+      title={labelFor(mode)}
+      onClick={() => setMode(nextMode(mode))}
     >
-      {isDark ? IconSun : IconMoon}
+      {iconFor(mode)}
     </button>
   );
 }

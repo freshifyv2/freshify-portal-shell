@@ -29,6 +29,7 @@ export type ActiveSection =
   | "users"
   | "account"
   | "portal-settings"
+  | "audit"
   | "projects"
   | "tasks"
   | "reports"
@@ -167,6 +168,11 @@ const IconShield = (
     <path d="M9 12l2 2 4-4" />
   </svg>
 );
+const IconActivity = (
+  <svg viewBox="0 0 24 24" width="22" height="22" {...stroke}>
+    <path d="M3 12h4l3-8 4 16 3-8h4" />
+  </svg>
+);
 
 const NAV_ITEMS: NavItem[] = [
   { key: "dashboard", label: "Dashboard", href: "/dashboard", icon: IconDashboard },
@@ -174,6 +180,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "workspaces", label: "Workspaces", href: "/dashboard/workspaces", icon: IconWorkspaces },
   { key: "users", label: "Users", href: "/dashboard/users/list", icon: IconUsers, operatorOnly: true },
   { key: "portal-settings", label: "Portal Settings", href: "/dashboard/portal-settings", icon: IconShield, operatorOnly: true },
+  { key: "audit", label: "Audit Log", href: "/dashboard/audit", icon: IconActivity, operatorOnly: true },
   { key: "account", label: "Account", href: "/dashboard/users/account", icon: IconAccount },
   // Service modules — guide-only, separated by divider
   { key: "projects", label: "Projects", href: "/dashboard/projects", icon: IconProjects, guideOnly: true, groupStart: "Service Modules" },
