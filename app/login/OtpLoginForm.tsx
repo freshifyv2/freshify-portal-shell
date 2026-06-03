@@ -13,7 +13,7 @@
  *   re-checks identifier+channel, so they must be in the verify payload.
  *
  * On verify success the BFF sets the sp_session cookie; we just push the
- * router to `next`.
+ * router to `next`. Styling is driven by .login-* classes in globals.css.
  */
 
 import { useState, FormEvent } from "react";
@@ -128,7 +128,6 @@ export default function OtpLoginForm({ next }: Props) {
         setError(data.error || data.message || `Verification failed (${r.status}).`);
         return;
       }
-      // BFF set the cookie; just navigate.
       router.push(next);
       router.refresh();
     } catch {
@@ -148,12 +147,9 @@ export default function OtpLoginForm({ next }: Props) {
 
   if (step === "identifier") {
     return (
-      <form onSubmit={onRequest} style={{ display: "grid", gap: 16 }}>
-        <div style={{ display: "grid", gap: 8 }}>
-          <label
-            htmlFor="channel"
-            style={{ fontSize: 13, fontWeight: 600, color: "var(--muted)" }}
-          >
+      <form onSubmit={onRequest} style={{ display: "grid", gap: 20 }}>
+        <div className="login-field">
+          <label htmlFor="channel" className="login-field-label">
             Delivery channel
           </label>
           <select
@@ -168,11 +164,8 @@ export default function OtpLoginForm({ next }: Props) {
           </select>
         </div>
 
-        <div style={{ display: "grid", gap: 8 }}>
-          <label
-            htmlFor="identifier"
-            style={{ fontSize: 13, fontWeight: 600, color: "var(--muted)" }}
-          >
+        <div className="login-field">
+          <label htmlFor="identifier" className="login-field-label">
             {channel === "sms" ? "Phone number" : "Email address"}
           </label>
           <input
@@ -191,17 +184,7 @@ export default function OtpLoginForm({ next }: Props) {
         </div>
 
         {error && (
-          <div
-            role="alert"
-            style={{
-              fontSize: 13,
-              color: "var(--fg)",
-              padding: "8px 12px",
-              background: "var(--surface-2)",
-              border: "1px solid var(--line-strong)",
-              borderRadius: 8,
-            }}
-          >
+          <div role="alert" className="login-banner-alert">
             {error}
           </div>
         )}
@@ -215,9 +198,9 @@ export default function OtpLoginForm({ next }: Props) {
           {submitting ? "Sending…" : "Send code"}
         </button>
 
-        <p style={{ fontSize: 12, color: "var(--muted)", margin: 0 }}>
-          By signing in you agree to the demo terms. This is a reference
-          implementation — do not use real credentials.
+        <p className="login-helper">
+          One-time codes only. No passwords. This portal is a reference
+          implementation of the Sovereign Modular Architecture.
         </p>
       </form>
     );
@@ -225,43 +208,23 @@ export default function OtpLoginForm({ next }: Props) {
 
   // Step: code
   return (
-    <form onSubmit={onVerify} style={{ display: "grid", gap: 16 }}>
-      <div
-        style={{
-          fontSize: 13,
-          color: "var(--muted)",
-          padding: "8px 12px",
-          background: "rgba(255,255,255,0.04)",
-          border: "1px solid rgba(255,255,255,0.08)",
-          borderRadius: 8,
-        }}
-      >
-        Signing in as <strong style={{ color: "var(--foreground)" }}>{identifier}</strong>{" "}
-        via {channel === "sms" ? "SMS" : "email"}.
+    <form onSubmit={onVerify} style={{ display: "grid", gap: 20 }}>
+      <div className="login-identity-banner">
+        <span>
+          Signing in as <strong>{identifier}</strong>
+        </span>
         <button
           type="button"
           onClick={reset}
-          style={{
-            marginLeft: 8,
-            background: "none",
-            border: "none",
-            color: "var(--violet)",
-            cursor: "pointer",
-            fontSize: 12,
-            textDecoration: "underline",
-            padding: 0,
-          }}
+          className="login-link-button"
           disabled={submitting}
         >
           Change
         </button>
       </div>
 
-      <div style={{ display: "grid", gap: 8 }}>
-        <label
-          htmlFor="code"
-          style={{ fontSize: 13, fontWeight: 600, color: "var(--muted)" }}
-        >
+      <div className="login-field">
+        <label htmlFor="code" className="login-field-label">
           One-time code
         </label>
         <input
@@ -271,67 +234,38 @@ export default function OtpLoginForm({ next }: Props) {
           autoComplete="one-time-code"
           value={code}
           onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-          placeholder="123456"
+          placeholder="••••••"
           maxLength={8}
-          className="field-input"
-          style={{
-            fontSize: 22,
-            letterSpacing: "0.3em",
-            textAlign: "center",
-            fontFamily: "var(--font-mono, monospace)",
-          }}
+          className="field-input login-code-input"
           disabled={submitting}
           required
           autoFocus
         />
       </div>
 
-      <div style={{ display: "grid", gap: 8 }}>
-        <label
-          htmlFor="displayName"
-          style={{ fontSize: 13, fontWeight: 600, color: "var(--muted)" }}
-        >
-          Display name <span style={{ fontWeight: 400 }}>(first-time sign-in only)</span>
+      <div className="login-field">
+        <label htmlFor="displayName" className="login-field-label">
+          Display name <span className="optional">(first-time sign-in only)</span>
         </label>
         <input
           id="displayName"
           type="text"
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
-          placeholder="Optional — only used if no account yet"
+          placeholder="Optional"
           className="field-input"
           disabled={submitting}
         />
       </div>
 
       {info && !error && (
-        <div
-          role="status"
-          style={{
-            fontSize: 13,
-            color: "var(--muted)",
-            padding: "8px 12px",
-            background: "rgba(108, 71, 255, 0.08)",
-            border: "1px solid rgba(108, 71, 255, 0.2)",
-            borderRadius: 8,
-          }}
-        >
+        <div role="status" className="login-banner-info">
           {info}
         </div>
       )}
 
       {error && (
-        <div
-          role="alert"
-          style={{
-            fontSize: 13,
-            color: "var(--fg)",
-            padding: "8px 12px",
-            background: "var(--surface-2)",
-            border: "1px solid var(--line-strong)",
-            borderRadius: 8,
-          }}
-        >
+        <div role="alert" className="login-banner-alert">
           {error}
         </div>
       )}
@@ -343,16 +277,6 @@ export default function OtpLoginForm({ next }: Props) {
         disabled={submitting || !code.trim()}
       >
         {submitting ? "Verifying…" : "Verify and sign in"}
-      </button>
-
-      <button
-        type="button"
-        onClick={reset}
-        className="btn btn-ghost"
-        style={{ width: "100%", justifyContent: "center" }}
-        disabled={submitting}
-      >
-        Use a different identifier
       </button>
     </form>
   );

@@ -50,7 +50,7 @@ export default function LoginPage({
             to end — this form is just a thin shell on top.
           </p>
         </div>
-        <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>
+        <div className="login-brand-panel-footnote">
           Reference implementation by Freshify · Standard Module Interface v0.1
         </div>
       </aside>

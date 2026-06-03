@@ -41,35 +41,42 @@
   /* Freshify accents (replaces RAS red) */
   --violet: #6c47ff;
   --violet-2: #5a37e0;
-  --violet-soft: rgba(108, 71, 255, 0.10);
-  --violet-soft-2: rgba(108, 71, 255, 0.16);
+  --violet-soft: rgba(108, 71, 255, 0.08);
+  --violet-soft-2: rgba(108, 71, 255, 0.14);
   --violet-tint: #f3f0ff;
   --violet-text: #4a2bd9;
-  --cyan: #00b4d8;
-  --cyan-soft: rgba(0, 180, 216, 0.1);
 
-  /* Status colors (RAS-style, kept identical for semantic clarity) */
-  --green: #16a34a;
-  --green-soft: #dcfce7;
-  --green-text: #15803d;
-  --amber: #f59e0b;
-  --amber-soft: #fef3c7;
-  --amber-text: #b45309;
-  --red: #ef4444;
-  --red-soft: #fee2e2;
-  --red-text: #b91c1c;
+  /* Beige accent — warm neutral, replaces amber/yellow in light mode */
+  --beige: #b8a784;
+  --beige-soft: #f5efe1;
+  --beige-text: #6b5a3a;
+
+  /* Status colors remapped into the approved palette
+     (white / purple / grey / beige). All status tones derive from violet,
+     beige, or neutral grey — no green/amber/red/cyan hues. */
+  --green: var(--violet);              /* positive → violet */
+  --green-soft: var(--violet-tint);
+  --green-text: var(--violet-text);
+  --amber: var(--beige);                /* warning → beige */
+  --amber-soft: var(--beige-soft);
+  --amber-text: var(--beige-text);
+  --red: #3f3f46;                       /* danger → deep neutral grey */
+  --red-soft: #f4f4f5;
+  --red-text: #18181b;
+  --cyan: var(--violet);                /* info → violet */
+  --cyan-soft: var(--violet-soft);
   --gray-soft: #f4f4f5;
   --gray-text: #52525b;
 
-  /* Pill / badge backgrounds (light tints) */
+  /* Pill / badge backgrounds — all in palette */
   --pill-violet-bg: #f3f0ff;
   --pill-violet-fg: #4a2bd9;
-  --pill-pink-bg: #fff1f2;
-  --pill-pink-fg: #be123c;
-  --pill-amber-bg: #fef3c7;
-  --pill-amber-fg: #b45309;
-  --pill-green-bg: #dcfce7;
-  --pill-green-fg: #15803d;
+  --pill-pink-bg: var(--violet-tint);   /* alias retained, mapped to violet */
+  --pill-pink-fg: var(--violet-text);
+  --pill-amber-bg: var(--beige-soft);
+  --pill-amber-fg: var(--beige-text);
+  --pill-green-bg: var(--violet-tint);
+  --pill-green-fg: var(--violet-text);
 
   /* Radii */
   --radius-sm: 6px;
@@ -129,16 +136,38 @@
   /* Violet accents shift slightly brighter for dark backgrounds */
   --violet: #8a6bff;
   --violet-2: #6c47ff;
-  --violet-soft: rgba(138, 107, 255, 0.16);
-  --violet-soft-2: rgba(138, 107, 255, 0.24);
-  --violet-tint: rgba(138, 107, 255, 0.12);
+  --violet-soft: rgba(138, 107, 255, 0.14);
+  --violet-soft-2: rgba(138, 107, 255, 0.22);
+  --violet-tint: rgba(138, 107, 255, 0.10);
   --violet-text: #b094ff;
-  --cyan: #38c2e8;
-  --cyan-soft: rgba(56, 194, 232, 0.16);
 
-  /* Beige accent for warmer surfaces in dark mode */
+  /* Beige accent — warm neutral against deep backgrounds */
   --beige: #d4c5a9;
-  --beige-soft: rgba(212, 197, 169, 0.12);
+  --beige-soft: rgba(212, 197, 169, 0.10);
+  --beige-text: #d4c5a9;
+
+  /* Status remap — same scheme as light mode, dark surfaces */
+  --green: var(--violet);
+  --green-soft: var(--violet-tint);
+  --green-text: var(--violet-text);
+  --amber: var(--beige);
+  --amber-soft: var(--beige-soft);
+  --amber-text: var(--beige-text);
+  --red: #d4d4d8;                       /* danger → light neutral against dark */
+  --red-soft: rgba(255, 255, 255, 0.06);
+  --red-text: #f4f4f5;
+  --cyan: var(--violet);
+  --cyan-soft: var(--violet-soft);
+
+  /* Pill remap for dark */
+  --pill-violet-bg: rgba(138, 107, 255, 0.16);
+  --pill-violet-fg: #c4b3ff;
+  --pill-pink-bg: rgba(138, 107, 255, 0.16);
+  --pill-pink-fg: #c4b3ff;
+  --pill-amber-bg: rgba(212, 197, 169, 0.12);
+  --pill-amber-fg: #d4c5a9;
+  --pill-green-bg: rgba(138, 107, 255, 0.16);
+  --pill-green-fg: #c4b3ff;
 
   color-scheme: dark;
 }
@@ -662,7 +691,7 @@ button {
 }
 
 .btn-danger:hover {
-  background: #dc2626;
+  background: var(--red);
 }
 
 .btn-sm {
@@ -1790,6 +1819,112 @@ button {
 .login-form-card p {
   color: var(--muted);
   margin: 0 0 32px;
+}
+
+/* Login form primitives — keep the OTP form polished and consistent */
+.login-field {
+  display: grid;
+  gap: 8px;
+}
+
+.login-field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.login-field-label .optional {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--muted-2);
+  margin-left: 6px;
+}
+
+.login-helper {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.login-code-input {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: 0.4em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  padding: 16px 14px;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+}
+
+.login-identity-banner {
+  font-size: 13px;
+  color: var(--muted);
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.login-identity-banner strong {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.login-link-button {
+  background: none;
+  border: none;
+  color: var(--violet);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0;
+  text-decoration: none;
+}
+
+.login-link-button:hover {
+  text-decoration: underline;
+}
+
+.login-link-button:disabled {
+  color: var(--muted-2);
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+.login-banner-info {
+  font-size: 13px;
+  color: var(--violet-text);
+  padding: 10px 14px;
+  background: var(--violet-soft);
+  border: 1px solid var(--violet-soft-2);
+  border-radius: var(--radius-md);
+  line-height: 1.5;
+}
+
+.login-banner-alert {
+  font-size: 13px;
+  color: var(--fg);
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  line-height: 1.5;
+}
+
+.login-brand-panel-footnote {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 /* ============================================================
