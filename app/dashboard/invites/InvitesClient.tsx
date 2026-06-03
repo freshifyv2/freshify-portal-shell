@@ -32,6 +32,9 @@ export interface InviteRow {
   expiresAt: string;
   status: string;
   resentCount?: number;
+  emailSentAt?: string | null;
+  emailSendError?: string | null;
+  emailProvider?: string | null;
 }
 
 interface BatchResult {
@@ -179,6 +182,33 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
       }
     } catch {
       window.prompt("Copy invite link", link);
+    }
+  }
+
+  async function resendEmailOnly(inviteId: string) {
+    setBusy(`resend-email:${inviteId}`);
+    setError(null);
+    setInfo(null);
+    try {
+      const r = await fetch(
+        `/api/portal-invites/${encodeURIComponent(inviteId)}/resend-email`,
+        { method: "POST" },
+      );
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        throw new Error(j.error || `resend-email failed: ${r.status}`);
+      }
+      if (j.ok === false) {
+        throw new Error(j.error || "send failed");
+      }
+      setInfo(
+        `Re-sent invite email${j.messageId ? ` (${j.messageId})` : ""}.`,
+      );
+      await refreshList();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(null);
     }
   }
 
@@ -482,7 +512,8 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
                 <th>Scope</th>
                 <th>Invited</th>
                 <th>Expires</th>
-                <th style={{ width: 220 }}>Actions</th>
+                <th>Email</th>
+                <th style={{ width: 260 }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -545,6 +576,29 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
                       </span>
                     </td>
                     <td>
+                      {inv.emailSentAt ? (
+                        <span
+                          className="data-table-sub"
+                          title={`Provider: ${inv.emailProvider ?? "unknown"}`}
+                        >
+                          Sent {new Date(inv.emailSentAt).toLocaleString()}
+                        </span>
+                      ) : inv.emailSendError ? (
+                        <span
+                          className="data-table-sub"
+                          title={inv.emailSendError}
+                          style={{ color: "var(--fg-2)" }}
+                        >
+                          Failed — {inv.emailSendError.slice(0, 32)}
+                          {inv.emailSendError.length > 32 ? "…" : ""}
+                        </span>
+                      ) : (
+                        <span className="data-table-sub" style={{ color: "var(--fg-2)" }}>
+                          Pending
+                        </span>
+                      )}
+                    </td>
+                    <td>
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                         <button
                           type="button"
@@ -553,6 +607,17 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
                           disabled={lock}
                         >
                           {justCopied ? "Copied" : "Copy link"}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => resendEmailOnly(inv.inviteId)}
+                          disabled={lock}
+                          title="Retry the email send without rotating the token"
+                        >
+                          {busy === `resend-email:${inv.inviteId}`
+                            ? "Sending…"
+                            : "Retry email"}
                         </button>
                         <button
                           type="button"
