@@ -63,6 +63,10 @@ function eventSummary(entry: AuditEntry): string {
   if (ev === "portal.invite_revoked") {
     return `Revoked invite for ${String(p.email ?? "unknown")}`;
   }
+  if (ev === "portal.invite_resent") {
+    const count = typeof p.resentCount === "number" ? ` (×${p.resentCount})` : "";
+    return `Resent invite for ${String(p.email ?? "unknown")}${count}`;
+  }
   if (ev === "portal.invite_accepted") {
     return `Invite accepted by ${String(p.userId ?? "unknown")}`;
   }

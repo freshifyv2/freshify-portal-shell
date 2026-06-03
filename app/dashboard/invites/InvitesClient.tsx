@@ -26,6 +26,7 @@ export interface InviteRow {
   createdAt: string;
   expiresAt: string;
   status: string;
+  resentCount?: number;
 }
 
 interface BatchResult {
@@ -48,6 +49,7 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [copiedInviteId, setCopiedInviteId] = useState<string | null>(null);
+  const [resentInviteId, setResentInviteId] = useState<string | null>(null);
 
   // Mint form state
   const [mintEmail, setMintEmail] = useState("");
@@ -131,6 +133,41 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
       }
     } catch {
       window.prompt("Copy invite link", link);
+    }
+  }
+
+  async function resendInvite(inviteId: string) {
+    setBusy(`resend:${inviteId}`);
+    setError(null);
+    setInfo(null);
+    try {
+      const r = await fetch(
+        `/api/portal-invites/${encodeURIComponent(inviteId)}/resend`,
+        { method: "POST" },
+      );
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || `resend failed: ${r.status}`);
+      // Auto-copy the freshly minted link so the operator can paste it
+      // immediately. New expiresAt is in j.expiresAt.
+      const link = buildInviteLink(j.token);
+      try {
+        if (typeof navigator !== "undefined" && navigator.clipboard) {
+          await navigator.clipboard.writeText(link);
+        }
+      } catch {
+        // Non-fatal — the link is still visible in the row after refresh.
+      }
+      setResentInviteId(inviteId);
+      setTimeout(() => setResentInviteId((cur) => (cur === inviteId ? null : cur)), 2500);
+      const newExpiry = j.expiresAt ? new Date(j.expiresAt).toLocaleString() : "updated expiry";
+      setInfo(
+        `Resent invite for ${j.email}. New link copied to clipboard. Expires ${newExpiry}.`,
+      );
+      await refreshList();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(null);
     }
   }
 
@@ -355,6 +392,23 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
                     </td>
                     <td>
                       <span className="data-table-strong">{inv.email}</span>
+                      {inv.resentCount && inv.resentCount > 0 ? (
+                        <span
+                          style={{
+                            marginLeft: 8,
+                            padding: "2px 6px",
+                            borderRadius: 4,
+                            border: "1px solid var(--line)",
+                            background: "var(--surface-2)",
+                            color: "var(--fg-2)",
+                            fontSize: 11,
+                            verticalAlign: "middle",
+                          }}
+                          title={`Resent ${inv.resentCount} time${inv.resentCount === 1 ? "" : "s"}`}
+                        >
+                          resent ×{inv.resentCount}
+                        </span>
+                      ) : null}
                       <div className="data-table-sub" style={{ fontSize: 11 }}>
                         {inv.inviteId}
                       </div>
@@ -374,7 +428,7 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
                       </span>
                     </td>
                     <td>
-                      <div style={{ display: "flex", gap: 8 }}>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                         <button
                           type="button"
                           className="btn btn-secondary btn-sm"
@@ -382,6 +436,19 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
                           disabled={lock}
                         >
                           {justCopied ? "Copied" : "Copy link"}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => resendInvite(inv.inviteId)}
+                          disabled={lock}
+                          title="Generate a new token + extend expiry, then copy the new link"
+                        >
+                          {busy === `resend:${inv.inviteId}`
+                            ? "Resending…"
+                            : resentInviteId === inv.inviteId
+                              ? "Resent"
+                              : "Resend"}
                         </button>
                         <button
                           type="button"
