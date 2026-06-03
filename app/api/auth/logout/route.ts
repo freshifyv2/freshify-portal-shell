@@ -20,7 +20,12 @@ function safeNext(input: string | null): string {
 
 export async function GET(req: NextRequest) {
   const next = safeNext(req.nextUrl.searchParams.get("next"));
-  const url = new URL(next, req.nextUrl.origin);
+  // Prefer the public host from forwarded headers so we don't leak the
+  // Cloud Run internal listen address (0.0.0.0:8080) into the redirect.
+  const fwdHost = req.headers.get("x-forwarded-host") || req.headers.get("host");
+  const fwdProto = req.headers.get("x-forwarded-proto") || "https";
+  const base = fwdHost ? `${fwdProto}://${fwdHost}` : req.nextUrl.origin;
+  const url = new URL(next, base);
   const res = NextResponse.redirect(url);
   res.cookies.set(SESSION_COOKIE, "", {
     httpOnly: true,
