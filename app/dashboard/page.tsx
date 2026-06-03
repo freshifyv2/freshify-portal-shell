@@ -11,6 +11,7 @@ import { redirect } from "next/navigation";
 import { readSessionToken, decodeClaims } from "@/lib/session";
 import { Chrome } from "@/lib/Chrome";
 import { loadChromeContext } from "@/lib/chromeContext";
+import { RecentActivity, type AuditEntry } from "./RecentActivity";
 
 export const dynamic = "force-dynamic";
 
@@ -109,17 +110,20 @@ export default async function Dashboard() {
   let companiesStats: CompaniesStats | null = null;
   let workspacesStats: WorkspacesStats | null = null;
   let invites: PortalInvite[] = [];
+  let auditEntries: AuditEntry[] = [];
   if (isOperator) {
-    const [u, c, w, i] = await Promise.all([
+    const [u, c, w, i, a] = await Promise.all([
       fetchJSON<UsersStats>(`${USERS_URL}/v1/admin/users-stats`, token),
       fetchJSON<CompaniesStats>(`${COMPANIES_URL}/v1/admin/companies/stats`, token),
       fetchJSON<WorkspacesStats>(`${WORKSPACES_URL}/v1/admin/workspaces/stats`, token),
       fetchJSON<{ invites: PortalInvite[] }>(`${USERS_URL}/v1/portal-invites`, token),
+      fetchJSON<{ entries: AuditEntry[] }>(`${USERS_URL}/v1/admin/audit-feed?limit=20`, token),
     ]);
     usersStats = u;
     companiesStats = c;
     workspacesStats = w;
     invites = i?.invites || [];
+    auditEntries = a?.entries || [];
   }
 
   return (
@@ -235,6 +239,9 @@ export default async function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Operator-only: portal-wide recent activity */}
+      {isOperator && <RecentActivity initialEntries={auditEntries} />}
 
       {/* 2x list cards */}
       <div className="lists-grid">
