@@ -105,6 +105,23 @@ export function PortalSettingsForm({ initial }: { initial: PortalSettings }) {
         setStatus({ kind: "err", msg: `Save failed (${r.status}): ${t.slice(0, 200)}` });
         return;
       }
+      // Broadcast the new settings so other in-page consumers (ThemeProvider /
+      // ThemeToggle) can react without a full reload. We only ship the
+      // fields anyone listens to today; expand as needed.
+      try {
+        window.dispatchEvent(
+          new CustomEvent("portal-settings-changed", {
+            detail: {
+              branding: {
+                defaultTheme: s.branding.defaultTheme,
+                allowUserThemeOverride: s.branding.allowUserThemeOverride,
+              },
+            },
+          }),
+        );
+      } catch {
+        /* CustomEvent unavailable in very old browsers — ignore. */
+      }
       setStatus({ kind: "ok" });
     } catch (err: any) {
       setStatus({ kind: "err", msg: err?.message || "Network error" });

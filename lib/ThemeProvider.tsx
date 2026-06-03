@@ -76,10 +76,15 @@ export function ThemeProvider({
 }: ProviderProps) {
   const [mode, setModeState] = useState<ThemeMode>(defaultMode);
   const [effective, setEffective] = useState<EffectiveTheme>("light");
+  // Live overrides surfaced by the Portal Settings save handler. Initialized
+  // from props so SSR still controls first paint; updated by the
+  // "portal-settings-changed" CustomEvent listener below.
+  const [liveDefault, setLiveDefault] = useState<ThemeMode>(defaultMode);
+  const [liveAllow, setLiveAllow] = useState<boolean>(allowOverride);
 
   // Hydrate from storage on mount, then attach system-pref listener if mode==="system".
   useEffect(() => {
-    const initial = allowOverride ? readStoredMode() : defaultMode;
+    const initial = liveAllow ? readStoredMode() : liveDefault;
     setModeState(initial);
 
     const resolve = () => {
@@ -99,11 +104,33 @@ export function ThemeProvider({
       mq.addEventListener?.("change", handler);
       return () => mq.removeEventListener?.("change", handler);
     }
-  }, [defaultMode, allowOverride]);
+  }, [liveDefault, liveAllow]);
+
+  // Listen for operator settings updates broadcast by PortalSettingsForm.
+  // This lets the topbar ThemeToggle appear/disappear and the default theme
+  // re-apply without a full page reload.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onChange = (e: Event) => {
+      const detail = (e as CustomEvent).detail as
+        | { branding?: { defaultTheme?: ThemeMode; allowUserThemeOverride?: boolean } }
+        | undefined;
+      const b = detail?.branding;
+      if (!b) return;
+      if (typeof b.allowUserThemeOverride === "boolean") {
+        setLiveAllow(b.allowUserThemeOverride);
+      }
+      if (b.defaultTheme === "light" || b.defaultTheme === "dark" || b.defaultTheme === "system") {
+        setLiveDefault(b.defaultTheme);
+      }
+    };
+    window.addEventListener("portal-settings-changed", onChange as EventListener);
+    return () => window.removeEventListener("portal-settings-changed", onChange as EventListener);
+  }, []);
 
   const setMode = useCallback(
     (m: ThemeMode) => {
-      if (!allowOverride) return;
+      if (!liveAllow) return;
       setModeState(m);
       try {
         window.localStorage.setItem("portal-theme", m);
@@ -116,7 +143,7 @@ export function ThemeProvider({
       setEffective(next);
       applyTheme(next);
     },
-    [allowOverride],
+    [liveAllow],
   );
 
   const toggle = useCallback(() => {
@@ -124,8 +151,8 @@ export function ThemeProvider({
   }, [effective, setMode]);
 
   const value = useMemo<ThemeContextValue>(
-    () => ({ mode, effective, allowOverride, setMode, toggle }),
-    [mode, effective, allowOverride, setMode, toggle],
+    () => ({ mode, effective, allowOverride: liveAllow, setMode, toggle }),
+    [mode, effective, liveAllow, setMode, toggle],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
