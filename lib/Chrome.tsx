@@ -30,6 +30,7 @@ export type ActiveSection =
   | "account"
   | "portal-settings"
   | "audit"
+  | "invites"
   | "projects"
   | "tasks"
   | "reports"
@@ -173,6 +174,12 @@ const IconActivity = (
     <path d="M3 12h4l3-8 4 16 3-8h4" />
   </svg>
 );
+const IconEnvelope = (
+  <svg viewBox="0 0 24 24" width="18" height="18" {...stroke}>
+    <rect x="3" y="5" width="18" height="14" rx="2" />
+    <path d="M3 7l9 6 9-6" />
+  </svg>
+);
 
 const NAV_ITEMS: NavItem[] = [
   { key: "dashboard", label: "Dashboard", href: "/dashboard", icon: IconDashboard },
@@ -181,6 +188,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "users", label: "Users", href: "/dashboard/users/list", icon: IconUsers, operatorOnly: true },
   { key: "portal-settings", label: "Portal Settings", href: "/dashboard/portal-settings", icon: IconShield, operatorOnly: true },
   { key: "audit", label: "Audit Log", href: "/dashboard/audit", icon: IconActivity, operatorOnly: true },
+  { key: "invites", label: "Invites", href: "/dashboard/invites", icon: IconEnvelope, operatorOnly: true },
   { key: "account", label: "Account", href: "/dashboard/users/account", icon: IconAccount },
   // Service modules — guide-only, separated by divider
   { key: "projects", label: "Projects", href: "/dashboard/projects", icon: IconProjects, guideOnly: true, groupStart: "Service Modules" },
