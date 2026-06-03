@@ -15,6 +15,11 @@
  */
 import { useMemo, useState } from "react";
 
+// Deploy 5.7 — client-side narrowing of the invites list. Server still
+// returns every outstanding invite (operator-only, capped); the operator
+// just needs a way to focus the table once volume grows.
+type RowScope = "all" | "portal" | "customer" | "workspace";
+
 export interface InviteRow {
   inviteId: string;
   email: string;
@@ -51,6 +56,11 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
   const [copiedInviteId, setCopiedInviteId] = useState<string | null>(null);
   const [resentInviteId, setResentInviteId] = useState<string | null>(null);
 
+  // Deploy 5.7 — narrowing filters (purely client-side over the loaded set).
+  const [searchQuery, setSearchQuery] = useState("");
+  const [scopeFilter, setScopeFilter] = useState<RowScope>("all");
+  const [resentOnly, setResentOnly] = useState(false);
+
   // Mint form state
   const [mintEmail, setMintEmail] = useState("");
   const [mintRole, setMintRole] = useState("member");
@@ -59,11 +69,37 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
 
   const lock = busy !== null;
 
+  const filteredInvites = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return invites.filter((inv) => {
+      if (resentOnly && !(inv.resentCount && inv.resentCount > 0)) return false;
+      if (scopeFilter === "portal" && (inv.companyId || inv.workspaceId)) return false;
+      if (scopeFilter === "customer" && !(inv.companyId && !inv.workspaceId)) return false;
+      if (scopeFilter === "workspace" && !inv.workspaceId) return false;
+      if (!q) return true;
+      const hay = [
+        inv.email,
+        inv.role,
+        inv.companyId ?? "",
+        inv.workspaceId ?? "",
+        inv.inviteId,
+      ]
+        .join(" ")
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }, [invites, searchQuery, scopeFilter, resentOnly]);
+
+  const hasFilters = searchQuery !== "" || scopeFilter !== "all" || resentOnly;
+
+  // Selection-aware aggregates work against the *filtered* set so "select all"
+  // means "all visible", which is what the operator expects when narrowing.
   const allSelected = useMemo(
-    () => invites.length > 0 && selected.size === invites.length,
-    [invites.length, selected.size],
+    () => filteredInvites.length > 0 && filteredInvites.every((i) => selected.has(i.inviteId)),
+    [filteredInvites, selected],
   );
-  const someSelected = selected.size > 0 && !allSelected;
+  const someSelected =
+    !allSelected && filteredInvites.some((i) => selected.has(i.inviteId));
 
   function toggleOne(inviteId: string) {
     setSelected((prev) => {
@@ -76,8 +112,18 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
 
   function toggleAll() {
     setSelected((prev) => {
-      if (prev.size === invites.length) return new Set();
-      return new Set(invites.map((i) => i.inviteId));
+      // If all visible rows are already selected, deselect just those (keep
+      // hidden-row selections intact). Otherwise add every visible row.
+      const visibleIds = filteredInvites.map((i) => i.inviteId);
+      const allVisibleSelected =
+        visibleIds.length > 0 && visibleIds.every((id) => prev.has(id));
+      const next = new Set(prev);
+      if (allVisibleSelected) {
+        for (const id of visibleIds) next.delete(id);
+      } else {
+        for (const id of visibleIds) next.add(id);
+      }
+      return next;
     });
   }
 
@@ -338,11 +384,82 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
         </div>
       )}
 
+      {/* Narrowing filters (Deploy 5.7) */}
+      {invites.length > 0 && (
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 12,
+            alignItems: "center",
+            padding: "10px 14px",
+            margin: "0 0 12px",
+            border: "1px solid var(--line)",
+            borderRadius: 8,
+            background: "var(--surface-1)",
+          }}
+        >
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search email, role, company, workspace, invite id"
+            style={{ ...inputStyle, minWidth: 280, flex: 1 }}
+          />
+          <select
+            value={scopeFilter}
+            onChange={(e) => setScopeFilter(e.target.value as RowScope)}
+            style={inputStyle}
+          >
+            <option value="all">All scopes</option>
+            <option value="portal">Portal-level only</option>
+            <option value="customer">Customer-scoped</option>
+            <option value="workspace">Workspace-scoped</option>
+          </select>
+          <label
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 13,
+              color: "var(--fg-2)",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={resentOnly}
+              onChange={(e) => setResentOnly(e.target.checked)}
+            />
+            Resent only
+          </label>
+          <span style={{ fontSize: 12, color: "var(--muted)", marginLeft: "auto" }}>
+            {filteredInvites.length} of {invites.length}
+          </span>
+          {hasFilters && (
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => {
+                setSearchQuery("");
+                setScopeFilter("all");
+                setResentOnly(false);
+              }}
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Table */}
       <div className="data-table-wrap">
         {invites.length === 0 ? (
           <p style={{ color: "var(--muted)", padding: 16, margin: 0 }}>
             No outstanding invites.
+          </p>
+        ) : filteredInvites.length === 0 ? (
+          <p style={{ color: "var(--muted)", padding: 16, margin: 0 }}>
+            No invites match the current filters.
           </p>
         ) : (
           <table className="data-table">
@@ -369,7 +486,7 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
               </tr>
             </thead>
             <tbody>
-              {invites.map((inv) => {
+              {filteredInvites.map((inv) => {
                 const isSelected = selected.has(inv.inviteId);
                 const isRevoking = busy === `revoke:${inv.inviteId}`;
                 const justCopied = copiedInviteId === inv.inviteId;
