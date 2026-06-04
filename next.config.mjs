@@ -24,6 +24,20 @@ const nextConfig = {
   output: "standalone",
   reactStrictMode: true,
   poweredByHeader: false,
+  async redirects() {
+    // Legacy aliases. Module settings used to surface under each module's
+    // list/[id]/module-settings route; they now live at
+    // /dashboard/{module}/settings. Define the redirect at the shell so the
+    // browser address bar resolves to the canonical fully-qualified path
+    // (a redirect inside an FE would strip the /dashboard/{module} prefix).
+    return [
+      {
+        source: "/dashboard/users/list/module-settings",
+        destination: "/dashboard/users/settings",
+        permanent: true,
+      },
+    ];
+  },
   async rewrites() {
     return [
       // ── Static assets (must come before page rewrites) ───────────────
