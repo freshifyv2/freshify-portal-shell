@@ -21,10 +21,16 @@ export interface AuditEntry {
   at: string;
   source: AuditSource;
   actorUserId: string | null;
+  // Deploy 5.15 — hydrated display names from users-be /v1/admin/audit-feed.
+  // Render `actorName ?? actorUserId ?? "—"` so operators see "Alex Morgan"
+  // instead of "usr_KV1im21A_b8OotEV".
+  actorName?: string | null;
   event: string;
   payload: Record<string, unknown>;
   companyId?: string | null;
+  companyName?: string | null;
   workspaceId?: string | null;
+  workspaceName?: string | null;
 }
 
 function s(v: unknown, fallback = "unknown"): string {

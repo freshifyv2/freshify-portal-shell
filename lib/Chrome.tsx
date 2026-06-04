@@ -189,7 +189,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "portal-settings", label: "Portal Settings", href: "/dashboard/portal-settings", icon: IconShield, operatorOnly: true },
   { key: "audit", label: "Audit Log", href: "/dashboard/audit", icon: IconActivity, operatorOnly: true },
   { key: "invites", label: "Invites", href: "/dashboard/invites", icon: IconEnvelope, operatorOnly: true },
-  { key: "account", label: "Account", href: "/dashboard/users/account", icon: IconAccount },
+  // (Account moved from sidebar to the topbar user pulldown in Deploy 5.15)
   // Service modules — guide-only, separated by divider
   { key: "projects", label: "Projects", href: "/dashboard/projects", icon: IconProjects, guideOnly: true, groupStart: "Service Modules" },
   { key: "tasks", label: "Tasks", href: "/dashboard/tasks", icon: IconTasks, guideOnly: true },
@@ -428,14 +428,35 @@ export function Chrome({
               {IconBell}
               <span className="topbar-bell-dot" aria-hidden />
             </button>
-            <a
-              href="/dashboard/users/account"
-              className={`topbar-user ${active === "account" ? "is-active" : ""}`}
-              aria-label="Account"
-            >
-              <span className="topbar-avatar" aria-hidden>{initials(user.displayName)}</span>
-              <span className="topbar-user-name">{user.displayName ?? "Signed in"}</span>
-            </a>
+            <details className="topbar-user-menu">
+              <summary
+                className={`topbar-user ${active === "account" ? "is-active" : ""}`}
+                aria-label="Account menu"
+              >
+                <span className="topbar-avatar" aria-hidden>{initials(user.displayName)}</span>
+                <span className="topbar-user-name">{user.displayName ?? "Signed in"}</span>
+                <span className="topbar-user-chevron" aria-hidden>{IconChevron}</span>
+              </summary>
+              <div className="topbar-user-dropdown" role="menu">
+                <a
+                  href="/dashboard/users/account"
+                  className="topbar-user-dropdown-item"
+                  role="menuitem"
+                >
+                  <span className="topbar-user-dropdown-icon" aria-hidden>{IconAccount}</span>
+                  <span>Account</span>
+                </a>
+                <label
+                  htmlFor="logout-modal"
+                  className="topbar-user-dropdown-item"
+                  role="menuitem"
+                  style={{ cursor: "pointer" }}
+                >
+                  <span className="topbar-user-dropdown-icon" aria-hidden>{IconLogout}</span>
+                  <span>Log out</span>
+                </label>
+              </div>
+            </details>
           </div>
         </header>
 

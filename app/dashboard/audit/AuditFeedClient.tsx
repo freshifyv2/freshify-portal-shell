@@ -321,8 +321,12 @@ export function AuditFeedClient({ initialEntries, initialCursor }: Props) {
                       <span className="pill is-violet">{sourceLabel(e.source)}</span>
                     </td>
                     <td>{eventSummary(e)}</td>
-                    <td style={{ color: "var(--muted)", fontSize: 13, fontFamily: "monospace" }}>
-                      {e.actorUserId ?? "—"}
+                    <td style={{ color: "var(--muted)", fontSize: 13 }}>
+                      {e.actorName ?? (
+                        <span style={{ fontFamily: "monospace" }}>
+                          {e.actorUserId ?? "—"}
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))}

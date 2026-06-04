@@ -39,9 +39,12 @@ interface PortalInvite {
   inviteId: string;
   email: string;
   companyId: string | null;
+  companyName?: string | null;
   workspaceId: string | null;
+  workspaceName?: string | null;
   role: string;
   invitedBy: string;
+  invitedByName?: string | null;
   createdAt: string;
   expiresAt: string;
   status: string;

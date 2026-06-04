@@ -134,7 +134,7 @@ export function RecentActivity({ initialEntries }: Props) {
                   </td>
                   <td>{eventSummary(e)}</td>
                   <td style={{ color: "var(--muted)", fontSize: 13 }}>
-                    {e.actorUserId ?? "—"}
+                    {e.actorName ?? e.actorUserId ?? "—"}
                   </td>
                 </tr>
               ))}

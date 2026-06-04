@@ -35,7 +35,11 @@ export interface InviteRow {
   email: string;
   token: string;
   companyId: string | null;
+  companyName?: string | null;
   workspaceId: string | null;
+  workspaceName?: string | null;
+  invitedByName?: string | null;
+  acceptedByName?: string | null;
   role: string;
   invitedBy: string;
   createdAt: string;
@@ -733,11 +737,14 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
                 const isSelected = selected.has(inv.inviteId);
                 const isRevoking = busy === `revoke:${inv.inviteId}`;
                 const justCopied = copiedInviteId === inv.inviteId;
+                // Deploy 5.15 — prefer hydrated names from the backend; fall
+                // back to the truncated ID label so older entries still render.
                 const scope =
                   inv.workspaceId
-                    ? `wsp ${inv.workspaceId.slice(0, 12)}…`
+                    ? (inv.workspaceName ??
+                      `wsp ${inv.workspaceId.slice(0, 12)}…`)
                     : inv.companyId
-                      ? `cmp ${inv.companyId.slice(0, 12)}…`
+                      ? (inv.companyName ?? `cmp ${inv.companyId.slice(0, 12)}…`)
                       : "portal";
                 const isAccepted = inv.status === "accepted";
                 return (
