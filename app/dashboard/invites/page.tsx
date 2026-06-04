@@ -87,9 +87,10 @@ export default async function InvitesPage() {
         <div>
           <h1 className="page-greeting" style={{ margin: 0 }}>Invites</h1>
           <p style={{ color: "var(--muted)", marginTop: 8, marginBottom: 0 }}>
-            Outstanding portal invites — pending and unexpired. Mint new
-            invites, copy invite links, revoke single or in bulk. Revocations
-            are recorded in the audit log.
+            Outstanding portal invites plus recently accepted (last 30 days).
+            Mint new invites, copy links, revoke pending ones. The Acceptance
+            column shows the membership outcome — use the Needs attention
+            filter to surface accepted invites that need a backfill.
           </p>
         </div>
       </div>

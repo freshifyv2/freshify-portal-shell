@@ -20,6 +20,16 @@ import { useMemo, useState } from "react";
 // just needs a way to focus the table once volume grows.
 type RowScope = "all" | "portal" | "customer" | "workspace";
 
+// Deploy 5.12 — membership status derived server-side from the latest
+// portal.membership_* audit event for each invite.
+export type MembershipStatus =
+  | "pending"
+  | "granted"
+  | "already_member"
+  | "failed"
+  | "missing"
+  | "n/a";
+
 export interface InviteRow {
   inviteId: string;
   email: string;
@@ -31,10 +41,15 @@ export interface InviteRow {
   createdAt: string;
   expiresAt: string;
   status: string;
+  acceptedAt?: string | null;
+  acceptedBy?: string | null;
   resentCount?: number;
   emailSentAt?: string | null;
   emailSendError?: string | null;
   emailProvider?: string | null;
+  membershipStatus?: MembershipStatus;
+  membershipEventAt?: string | null;
+  membershipError?: string | null;
 }
 
 interface BatchResult {
@@ -63,6 +78,10 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
   const [searchQuery, setSearchQuery] = useState("");
   const [scopeFilter, setScopeFilter] = useState<RowScope>("all");
   const [resentOnly, setResentOnly] = useState(false);
+  // Deploy 5.12 — "needs attention" = accepted invite with no granted/
+  // already_member event (i.e. failed or missing) so the operator can
+  // spot invites that need a membership backfill.
+  const [needsAttentionOnly, setNeedsAttentionOnly] = useState(false);
 
   // Mint form state
   const [mintEmail, setMintEmail] = useState("");
@@ -76,6 +95,10 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
     const q = searchQuery.trim().toLowerCase();
     return invites.filter((inv) => {
       if (resentOnly && !(inv.resentCount && inv.resentCount > 0)) return false;
+      if (needsAttentionOnly) {
+        const s = inv.membershipStatus;
+        if (s !== "failed" && s !== "missing") return false;
+      }
       if (scopeFilter === "portal" && (inv.companyId || inv.workspaceId)) return false;
       if (scopeFilter === "customer" && !(inv.companyId && !inv.workspaceId)) return false;
       if (scopeFilter === "workspace" && !inv.workspaceId) return false;
@@ -91,18 +114,41 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
         .toLowerCase();
       return hay.includes(q);
     });
-  }, [invites, searchQuery, scopeFilter, resentOnly]);
+  }, [invites, searchQuery, scopeFilter, resentOnly, needsAttentionOnly]);
 
-  const hasFilters = searchQuery !== "" || scopeFilter !== "all" || resentOnly;
+  const hasFilters =
+    searchQuery !== "" ||
+    scopeFilter !== "all" ||
+    resentOnly ||
+    needsAttentionOnly;
+
+  // Deploy 5.12 — count of invites that need backfill, surfaced in the
+  // filter bar so the operator can see at a glance how much is outstanding.
+  const needsAttentionCount = useMemo(
+    () =>
+      invites.filter(
+        (i) =>
+          i.membershipStatus === "failed" || i.membershipStatus === "missing",
+      ).length,
+    [invites],
+  );
 
   // Selection-aware aggregates work against the *filtered* set so "select all"
   // means "all visible", which is what the operator expects when narrowing.
+  // Deploy 5.12 — accepted invites can't be revoked, so they're excluded
+  // from selection state.
+  const selectableInvites = useMemo(
+    () => filteredInvites.filter((i) => i.status === "pending"),
+    [filteredInvites],
+  );
   const allSelected = useMemo(
-    () => filteredInvites.length > 0 && filteredInvites.every((i) => selected.has(i.inviteId)),
-    [filteredInvites, selected],
+    () =>
+      selectableInvites.length > 0 &&
+      selectableInvites.every((i) => selected.has(i.inviteId)),
+    [selectableInvites, selected],
   );
   const someSelected =
-    !allSelected && filteredInvites.some((i) => selected.has(i.inviteId));
+    !allSelected && selectableInvites.some((i) => selected.has(i.inviteId));
 
   function toggleOne(inviteId: string) {
     setSelected((prev) => {
@@ -115,9 +161,11 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
 
   function toggleAll() {
     setSelected((prev) => {
-      // If all visible rows are already selected, deselect just those (keep
-      // hidden-row selections intact). Otherwise add every visible row.
-      const visibleIds = filteredInvites.map((i) => i.inviteId);
+      // If all visible-and-selectable rows are already selected, deselect
+      // just those (keep hidden-row selections intact). Otherwise add every
+      // visible selectable row. Accepted rows are excluded because
+      // revoke-batch only operates on pending invites.
+      const visibleIds = selectableInvites.map((i) => i.inviteId);
       const allVisibleSelected =
         visibleIds.length > 0 && visibleIds.every((id) => prev.has(id));
       const next = new Set(prev);
@@ -462,6 +510,38 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
             />
             Resent only
           </label>
+          <label
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 13,
+              color: "var(--fg-2)",
+            }}
+            title="Accepted invites with no membership granted — needs backfill"
+          >
+            <input
+              type="checkbox"
+              checked={needsAttentionOnly}
+              onChange={(e) => setNeedsAttentionOnly(e.target.checked)}
+            />
+            Needs attention
+            {needsAttentionCount > 0 && (
+              <span
+                style={{
+                  marginLeft: 4,
+                  padding: "1px 6px",
+                  borderRadius: 4,
+                  background: "var(--surface-2)",
+                  border: "1px solid var(--line)",
+                  fontSize: 11,
+                  color: "var(--fg)",
+                }}
+              >
+                {needsAttentionCount}
+              </span>
+            )}
+          </label>
           <span style={{ fontSize: 12, color: "var(--muted)", marginLeft: "auto" }}>
             {filteredInvites.length} of {invites.length}
           </span>
@@ -473,6 +553,7 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
                 setSearchQuery("");
                 setScopeFilter("all");
                 setResentOnly(false);
+                setNeedsAttentionOnly(false);
               }}
             >
               Clear filters
@@ -513,6 +594,7 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
                 <th>Invited</th>
                 <th>Expires</th>
                 <th>Email</th>
+                <th>Acceptance</th>
                 <th style={{ width: 260 }}>Actions</th>
               </tr>
             </thead>
@@ -527,15 +609,24 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
                     : inv.companyId
                       ? `cmp ${inv.companyId.slice(0, 12)}…`
                       : "portal";
+                const isAccepted = inv.status === "accepted";
                 return (
-                  <tr key={inv.inviteId}>
+                  <tr
+                    key={inv.inviteId}
+                    style={isAccepted ? { opacity: 0.85 } : undefined}
+                  >
                     <td>
                       <input
                         type="checkbox"
                         aria-label={`Select invite for ${inv.email}`}
                         checked={isSelected}
                         onChange={() => toggleOne(inv.inviteId)}
-                        disabled={lock}
+                        disabled={lock || isAccepted}
+                        title={
+                          isAccepted
+                            ? "Accepted invites can't be revoked"
+                            : undefined
+                        }
                       />
                     </td>
                     <td>
@@ -599,48 +690,68 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
                       )}
                     </td>
                     <td>
-                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                        <button
-                          type="button"
-                          className="btn btn-secondary btn-sm"
-                          onClick={() => copyLink(inv.inviteId, inv.token)}
-                          disabled={lock}
+                      <MembershipBadge invite={inv} />
+                    </td>
+                    <td>
+                      {isAccepted ? (
+                        <span
+                          className="data-table-sub"
+                          style={{ color: "var(--fg-2)" }}
+                          title={
+                            inv.acceptedAt
+                              ? `Accepted ${new Date(inv.acceptedAt).toLocaleString()}`
+                              : "Accepted"
+                          }
                         >
-                          {justCopied ? "Copied" : "Copy link"}
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-secondary btn-sm"
-                          onClick={() => resendEmailOnly(inv.inviteId)}
-                          disabled={lock}
-                          title="Retry the email send without rotating the token"
-                        >
-                          {busy === `resend-email:${inv.inviteId}`
-                            ? "Sending…"
-                            : "Retry email"}
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-secondary btn-sm"
-                          onClick={() => resendInvite(inv.inviteId)}
-                          disabled={lock}
-                          title="Generate a new token + extend expiry, then copy the new link"
-                        >
-                          {busy === `resend:${inv.inviteId}`
-                            ? "Resending…"
-                            : resentInviteId === inv.inviteId
-                              ? "Resent"
-                              : "Resend"}
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-secondary btn-sm"
-                          onClick={() => revokeOne(inv.inviteId)}
-                          disabled={lock}
-                        >
-                          {isRevoking ? "Revoking…" : "Revoke"}
-                        </button>
-                      </div>
+                          Accepted
+                          {inv.acceptedAt
+                            ? ` · ${new Date(inv.acceptedAt).toLocaleDateString()}`
+                            : ""}
+                        </span>
+                      ) : (
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => copyLink(inv.inviteId, inv.token)}
+                            disabled={lock}
+                          >
+                            {justCopied ? "Copied" : "Copy link"}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => resendEmailOnly(inv.inviteId)}
+                            disabled={lock}
+                            title="Retry the email send without rotating the token"
+                          >
+                            {busy === `resend-email:${inv.inviteId}`
+                              ? "Sending…"
+                              : "Retry email"}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => resendInvite(inv.inviteId)}
+                            disabled={lock}
+                            title="Generate a new token + extend expiry, then copy the new link"
+                          >
+                            {busy === `resend:${inv.inviteId}`
+                              ? "Resending…"
+                              : resentInviteId === inv.inviteId
+                                ? "Resent"
+                                : "Resend"}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => revokeOne(inv.inviteId)}
+                            disabled={lock}
+                          >
+                            {isRevoking ? "Revoking…" : "Revoke"}
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 );
@@ -650,6 +761,88 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
         )}
       </div>
     </div>
+  );
+}
+
+// Deploy 5.12 — surface the membership outcome for each invite. Uses
+// neutral palette tokens only (no red/green/amber) per the white/purple/
+// grey/beige rule. "Failed" and "missing" carry a beige tone to flag
+// that operator attention is needed; granted/already_member are quiet.
+function MembershipBadge({ invite }: { invite: InviteRow }) {
+  const status = invite.membershipStatus ?? "pending";
+  const tones: Record<
+    string,
+    { label: string; bg: string; fg: string; border: string }
+  > = {
+    granted: {
+      label: "Granted",
+      bg: "var(--violet-soft)",
+      fg: "var(--violet-text)",
+      border: "var(--violet-soft)",
+    },
+    already_member: {
+      label: "Already member",
+      bg: "var(--surface-2)",
+      fg: "var(--fg-2)",
+      border: "var(--line)",
+    },
+    failed: {
+      label: "Failed",
+      bg: "var(--beige-soft)",
+      fg: "var(--beige-text)",
+      border: "var(--beige-soft)",
+    },
+    missing: {
+      label: "Missing — backfill",
+      bg: "var(--beige-soft)",
+      fg: "var(--beige-text)",
+      border: "var(--beige-soft)",
+    },
+    pending: {
+      label: "—",
+      bg: "transparent",
+      fg: "var(--muted)",
+      border: "transparent",
+    },
+    "n/a": {
+      label: "Portal",
+      bg: "var(--surface-2)",
+      fg: "var(--fg-2)",
+      border: "var(--line)",
+    },
+  };
+  const tone = tones[status] ?? tones.pending;
+  const title = (() => {
+    if (status === "failed" && invite.membershipError) {
+      return `Membership write failed: ${invite.membershipError}`;
+    }
+    if (status === "missing") {
+      return "Accepted but no membership audit event found — backfill required";
+    }
+    if (invite.membershipEventAt) {
+      return `Recorded ${new Date(invite.membershipEventAt).toLocaleString()}`;
+    }
+    if (status === "pending") return "Invite not yet accepted";
+    if (status === "n/a") return "Portal-level invite — no membership row needed";
+    return undefined;
+  })();
+  return (
+    <span
+      title={title}
+      style={{
+        display: "inline-block",
+        padding: "2px 8px",
+        borderRadius: 4,
+        background: tone.bg,
+        color: tone.fg,
+        border: `1px solid ${tone.border}`,
+        fontSize: 11,
+        fontWeight: 500,
+        whiteSpace: "nowrap",
+      }}
+    >
+      {tone.label}
+    </span>
   );
 }
 
