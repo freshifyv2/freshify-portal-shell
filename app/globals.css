@@ -2059,8 +2059,20 @@ button {
    ============================================================ */
 
 /* ---- Tenant switcher: details/summary dropdown for operators ---- */
+/* Deploy 5.16 — the sidebar dropdown was crammed into the narrow column.
+   Pop it out as a floating panel so the content can breathe. */
 .sidebar-switcher-details {
+  position: relative;
   margin: 0 0 24px;
+}
+.sidebar-switcher-details[open] > .sidebar-switcher-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 280px;
+  max-width: 320px;
+  z-index: 60;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
 }
 .sidebar-switcher-details > .sidebar-switcher {
   margin: 0;
@@ -2084,11 +2096,11 @@ button {
 }
 .sidebar-switcher-menu {
   margin-top: 6px;
-  padding: 6px;
+  padding: 8px;
   background: var(--sidebar-bg-2);
   border: 1px solid var(--sidebar-line);
   border-radius: var(--radius-md);
-  max-height: 280px;
+  max-height: 420px;
   overflow-y: auto;
 }
 .sidebar-switcher-form {
@@ -2986,11 +2998,20 @@ button {
 
 .sidebar-switcher-item-hint {
   margin-left: auto;
+  padding-left: 8px;
   font-size: 10px;
   font-weight: 600;
   color: var(--sidebar-muted, rgba(255, 255, 255, 0.45));
   text-transform: uppercase;
   letter-spacing: 0.06em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.sidebar-switcher-item > span:not(.sidebar-switcher-item-dot):not(.sidebar-switcher-item-hint) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .sidebar-switcher-empty {
@@ -3042,4 +3063,134 @@ button {
   .topbar-op-badge span:last-child {
     display: none;
   }
+}
+
+/* Deploy 5.16 — clear-search "×" button inside .search-input-wrap */
+.search-input-wrap {
+  position: relative;
+}
+.search-input-clear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--surface-2, rgba(0, 0, 0, 0.06));
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+  text-decoration: none;
+  transition: all 0.12s;
+}
+.search-input-clear:hover {
+  background: var(--violet-soft);
+  color: var(--violet);
+}
+
+/* Deploy 5.16 — make .filter-pill clickable when used as <Link>. */
+a.filter-pill {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Deploy 5.16 — clickable tag-chip variant (when used as <Link>). */
+.tag-chip.is-link,
+.tag-chip-overflow.is-link {
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.tag-chip.is-link:hover {
+  background: var(--violet-soft-2);
+  color: var(--violet-text);
+}
+.tag-chip-overflow.is-link:hover {
+  background: var(--violet-soft);
+  color: var(--violet-text);
+}
+
+/* Deploy 5.16 — invites table responsive behavior.
+   The invites table has 9 columns and gets crammed on narrow viewports.
+   At ≤1200px we drop the Invited-at column (createdAt is recoverable
+   from the inviteId timestamp prefix). At ≤900px we also drop the
+   Expires column and the Email-delivery column. At ≤640px we drop
+   the Scope column. Below that the wrap scrolls horizontally as
+   a fallback.
+
+   Column order (0-indexed):
+     0 = checkbox
+     1 = Email
+     2 = Role
+     3 = Scope
+     4 = Invited
+     5 = Expires
+     6 = Email (delivery)
+     7 = Acceptance
+     8 = Actions
+*/
+.data-table--invites {
+  table-layout: auto;
+}
+.data-table--invites thead th,
+.data-table--invites tbody td {
+  padding: 12px 14px;
+  vertical-align: top;
+}
+.data-table--invites tbody td:nth-child(1),
+.data-table--invites thead th:nth-child(1) {
+  width: 32px;
+  padding-right: 4px;
+}
+
+@media (max-width: 1200px) {
+  .data-table--invites thead th:nth-child(5),
+  .data-table--invites tbody td:nth-child(5) {
+    display: none;
+  }
+}
+@media (max-width: 960px) {
+  .data-table--invites thead th:nth-child(6),
+  .data-table--invites tbody td:nth-child(6),
+  .data-table--invites thead th:nth-child(7),
+  .data-table--invites tbody td:nth-child(7) {
+    display: none;
+  }
+}
+@media (max-width: 720px) {
+  .data-table--invites thead th:nth-child(4),
+  .data-table--invites tbody td:nth-child(4) {
+    display: none;
+  }
+}
+
+/* Compact invite email cell — secondary info wraps under the email. */
+.invite-email-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.invite-email-cell .data-table-strong {
+  word-break: break-word;
+  white-space: normal;
+}
+.invite-email-cell .invite-email-meta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: var(--muted);
+}
+.invite-email-cell .invite-resent-badge {
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--fg-2);
 }

@@ -707,7 +707,7 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
             No invites match the current filters.
           </p>
         ) : (
-          <table className="data-table">
+          <table className="data-table data-table--invites">
             <thead>
               <tr>
                 <th style={{ width: 40 }}>
@@ -767,26 +767,21 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
                       />
                     </td>
                     <td>
-                      <span className="data-table-strong">{inv.email}</span>
-                      {inv.resentCount && inv.resentCount > 0 ? (
-                        <span
-                          style={{
-                            marginLeft: 8,
-                            padding: "2px 6px",
-                            borderRadius: 4,
-                            border: "1px solid var(--line)",
-                            background: "var(--surface-2)",
-                            color: "var(--fg-2)",
-                            fontSize: 11,
-                            verticalAlign: "middle",
-                          }}
-                          title={`Resent ${inv.resentCount} time${inv.resentCount === 1 ? "" : "s"}`}
-                        >
-                          resent ×{inv.resentCount}
-                        </span>
-                      ) : null}
-                      <div className="data-table-sub" style={{ fontSize: 11 }}>
-                        {inv.inviteId}
+                      <div className="invite-email-cell">
+                        <span className="data-table-strong">{inv.email}</span>
+                        <div className="invite-email-meta">
+                          <span title={inv.inviteId}>
+                            {inv.inviteId.slice(0, 12)}…
+                          </span>
+                          {inv.resentCount && inv.resentCount > 0 ? (
+                            <span
+                              className="invite-resent-badge"
+                              title={`Resent ${inv.resentCount} time${inv.resentCount === 1 ? "" : "s"}`}
+                            >
+                              resent ×{inv.resentCount}
+                            </span>
+                          ) : null}
+                        </div>
                       </div>
                     </td>
                     <td>{inv.role}</td>
