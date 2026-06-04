@@ -3099,20 +3099,33 @@ a.filter-pill {
   align-items: center;
 }
 
-/* Deploy 5.16 — clickable tag-chip variant (when used as <Link>). */
+/* Deploy 5.17 — clickable tag-chip variant (when used as <Link>). */
 .tag-chip.is-link,
 .tag-chip-overflow.is-link {
   text-decoration: none;
   cursor: pointer;
   transition: all 0.12s;
 }
-.tag-chip.is-link:hover {
-  background: var(--violet-soft-2);
-  color: var(--violet-text);
-}
-.tag-chip-overflow.is-link:hover {
+.tag-chip.is-link {
   background: var(--violet-soft);
   color: var(--violet-text);
+  border-color: var(--violet-soft-2, var(--violet-soft));
+}
+.tag-chip.is-link:hover {
+  background: var(--violet);
+  color: white;
+  border-color: var(--violet);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25);
+}
+.tag-chip-overflow.is-link {
+  background: var(--violet);
+  color: white;
+}
+.tag-chip-overflow.is-link:hover {
+  background: var(--violet-text, #5b21b6);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25);
 }
 
 /* Deploy 5.16 — invites table responsive behavior.
