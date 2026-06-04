@@ -351,6 +351,78 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
     }
   }
 
+  // Deploy 5.13 — per-row backfill: write the missing membership row for
+  // an accepted invite. Idempotent on the backend; we just refresh the
+  // list to pick up the new badge state.
+  async function backfillOne(inviteId: string) {
+    setBusy(`backfill:${inviteId}`);
+    setError(null);
+    setInfo(null);
+    try {
+      const r = await fetch(
+        `/api/portal-invites/${encodeURIComponent(inviteId)}/backfill-membership`,
+        { method: "POST" },
+      );
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        throw new Error(
+          (j as { error?: string }).error || `backfill failed: ${r.status}`,
+        );
+      }
+      const action = (j as { action?: string }).action ?? "";
+      if (action === "granted") setInfo("Membership row written.");
+      else if (action === "already_present")
+        setInfo("Already a member — no change needed.");
+      else if (action === "failed")
+        setError(
+          `Backfill failed: ${(j as { error?: string }).error ?? "unknown"}`,
+        );
+      else if (action === "skipped")
+        setInfo("Portal-level invite — no membership row needed.");
+      await refreshList();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  // Deploy 5.13 — bulk backfill across every accepted invite in the last
+  // 90 days whose membership status is missing/failed. The backend caps
+  // each call; if hasMore is returned we prompt the operator to run again.
+  async function backfillAll() {
+    setBusy("batch:backfill");
+    setError(null);
+    setInfo(null);
+    try {
+      const r = await fetch("/api/portal-invites/backfill-memberships", {
+        method: "POST",
+      });
+      const j = (await r.json().catch(() => ({}))) as {
+        scanned?: number;
+        attempted?: number;
+        granted?: number;
+        alreadyPresent?: number;
+        failed?: number;
+        hasMore?: boolean;
+        error?: string;
+      };
+      if (!r.ok) throw new Error(j.error || `bulk backfill failed: ${r.status}`);
+      const parts: string[] = [];
+      if (j.granted) parts.push(`${j.granted} granted`);
+      if (j.alreadyPresent) parts.push(`${j.alreadyPresent} already a member`);
+      if (j.failed) parts.push(`${j.failed} failed`);
+      if (!parts.length) parts.push("Nothing to backfill.");
+      if (j.hasMore) parts.push("more remaining — click again to continue");
+      setInfo(parts.join(" · "));
+      await refreshList();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  }
+
   return (
     <div>
       {/* Mint form */}
@@ -542,6 +614,19 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
               </span>
             )}
           </label>
+          {needsAttentionCount > 0 && (
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={backfillAll}
+              disabled={lock}
+              title="Write missing membership rows for every accepted invite that needs one"
+            >
+              {busy === "batch:backfill"
+                ? "Backfilling all…"
+                : `Backfill all (${needsAttentionCount})`}
+            </button>
+          )}
           <span style={{ fontSize: 12, color: "var(--muted)", marginLeft: "auto" }}>
             {filteredInvites.length} of {invites.length}
           </span>
@@ -690,7 +775,30 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
                       )}
                     </td>
                     <td>
-                      <MembershipBadge invite={inv} />
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <MembershipBadge invite={inv} />
+                        {(inv.membershipStatus === "missing" ||
+                          inv.membershipStatus === "failed") && (
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => backfillOne(inv.inviteId)}
+                            disabled={lock}
+                            title="Write the missing membership row for this accepted invite"
+                          >
+                            {busy === `backfill:${inv.inviteId}`
+                              ? "Backfilling…"
+                              : "Backfill"}
+                          </button>
+                        )}
+                      </div>
                     </td>
                     <td>
                       {isAccepted ? (
