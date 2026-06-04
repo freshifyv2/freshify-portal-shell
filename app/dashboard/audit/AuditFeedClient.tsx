@@ -11,18 +11,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { eventSummary, sourceLabel, type AuditEntry, type AuditSource } from "./eventSummary";
 
-export type AuditSource = "portal" | "company" | "workspace";
-
-export interface AuditEntry {
-  at: string;
-  source: AuditSource;
-  actorUserId: string | null;
-  event: string;
-  payload: Record<string, unknown>;
-  companyId?: string | null;
-  workspaceId?: string | null;
-}
+export type { AuditEntry, AuditSource };
 
 type Filter = "all" | AuditSource;
 
@@ -35,6 +26,8 @@ interface EventPreset {
 const EVENT_PRESETS: EventPreset[] = [
   { value: "", label: "All events" },
   { value: "portal.invite_", label: "Invites" },
+  { value: "portal.invite_email_", label: "Invite email delivery" },
+  { value: "portal.membership_", label: "Membership write-through" },
   { value: "portal.admin_user_", label: "Admin users" },
   { value: "portal.settings_", label: "Portal settings" },
   { value: "company.", label: "Customer events" },
@@ -78,10 +71,6 @@ function relativeTime(iso: string): string {
   });
 }
 
-function sourceLabel(s: AuditSource): string {
-  return s === "company" ? "Customer" : s === "workspace" ? "Workspace" : "Portal";
-}
-
 const filterLabelStyle: React.CSSProperties = {
   display: "inline-flex",
   flexDirection: "column",
@@ -100,47 +89,6 @@ const filterControlStyle: React.CSSProperties = {
   fontSize: 13,
   fontFamily: "inherit",
 };
-
-function eventSummary(entry: AuditEntry): string {
-  const ev = entry.event;
-  const p = entry.payload || {};
-  if (ev === "portal.settings_updated") {
-    const groups = Array.isArray(p.groups) ? (p.groups as string[]).join(", ") : "settings";
-    return `Updated portal settings (${groups})`;
-  }
-  if (ev === "portal.invite_created") {
-    return `Created invite for ${String(p.email ?? "unknown")} as ${String(p.role ?? "member")}`;
-  }
-  if (ev === "portal.invite_revoked") {
-    return `Revoked invite for ${String(p.email ?? "unknown")}`;
-  }
-  if (ev === "portal.invite_resent") {
-    const count = typeof p.resentCount === "number" ? ` (×${p.resentCount})` : "";
-    return `Resent invite for ${String(p.email ?? "unknown")}${count}`;
-  }
-  if (ev === "portal.invite_accepted") {
-    return `Invite accepted by ${String(p.userId ?? "unknown")}`;
-  }
-  if (ev === "portal.admin_user_created") {
-    return `Created user ${String(p.email ?? p.userId ?? "unknown")}`;
-  }
-  if (ev === "portal.admin_user_updated") {
-    const changed = Array.isArray(p.changed) ? (p.changed as string[]).join(", ") : "fields";
-    return `Updated user ${String(p.userId ?? "unknown")} (${changed})`;
-  }
-  if (ev === "portal.admin_user_deleted") {
-    return `Deleted user ${String(p.userId ?? "unknown")}`;
-  }
-  if (ev.startsWith("company.")) {
-    const verb = ev.slice("company.".length).replace(/_/g, " ");
-    return `Customer ${verb}`;
-  }
-  if (ev.startsWith("workspace.")) {
-    const verb = ev.slice("workspace.".length).replace(/_/g, " ");
-    return `Workspace ${verb}`;
-  }
-  return ev;
-}
 
 interface Props {
   initialEntries: AuditEntry[];

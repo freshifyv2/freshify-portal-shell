@@ -11,18 +11,9 @@
  */
 "use client";
 import { useEffect, useState } from "react";
+import { eventSummary, sourceLabel, type AuditEntry, type AuditSource } from "./audit/eventSummary";
 
-export type AuditSource = "portal" | "company" | "workspace";
-
-export interface AuditEntry {
-  at: string;
-  source: AuditSource;
-  actorUserId: string | null;
-  event: string;
-  payload: Record<string, unknown>;
-  companyId?: string | null;
-  workspaceId?: string | null;
-}
+export type { AuditEntry, AuditSource };
 
 interface Props {
   initialEntries: AuditEntry[];
@@ -46,32 +37,6 @@ function relativeTime(iso: string): string {
     day: "numeric",
     year: "numeric",
   });
-}
-
-function sourceLabel(s: AuditSource): string {
-  return s === "company" ? "Customer" : s === "workspace" ? "Workspace" : "Portal";
-}
-
-function eventSummary(entry: AuditEntry): string {
-  // Human-readable summary. Falls back to the raw event key.
-  const ev = entry.event;
-  const p = entry.payload || {};
-  if (ev === "portal.settings_updated") {
-    const groups = Array.isArray(p.groups) ? (p.groups as string[]).join(", ") : "settings";
-    return `Updated portal settings (${groups})`;
-  }
-  if (ev === "portal.invite_created") {
-    return `Created invite for ${String(p.email ?? "unknown")} as ${String(p.role ?? "member")}`;
-  }
-  if (ev.startsWith("company.")) {
-    const verb = ev.slice("company.".length).replace(/_/g, " ");
-    return `Customer ${verb}`;
-  }
-  if (ev.startsWith("workspace.")) {
-    const verb = ev.slice("workspace.".length).replace(/_/g, " ");
-    return `Workspace ${verb}`;
-  }
-  return ev;
 }
 
 export function RecentActivity({ initialEntries }: Props) {

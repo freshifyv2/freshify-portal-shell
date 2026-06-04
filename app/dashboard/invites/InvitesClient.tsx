@@ -133,6 +133,18 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
     [invites],
   );
 
+  // Deploy 5.14 — count of invites whose email delivery failed because the
+  // COMMS_SHARED_SECRET is not configured in the runtime. Surfaced as a single
+  // top-of-page notice so the operator understands every "Failed" badge in
+  // the email column comes from the same missing-config root cause, not a
+  // per-invite bug. Operator action: set the secret in Cloud Run (out-of-band).
+  const commsSecretMissingCount = useMemo(
+    () =>
+      invites.filter((i) => i.emailSendError === "comms_secret_not_configured")
+        .length,
+    [invites],
+  );
+
   // Selection-aware aggregates work against the *filtered* set so "select all"
   // means "all visible", which is what the operator expects when narrowing.
   // Deploy 5.12 — accepted invites can't be revoked, so they're excluded
@@ -494,6 +506,39 @@ export function InvitesClient({ initialInvites }: { initialInvites: InviteRow[] 
         <div className="warning-banner" style={{ margin: "0 0 12px" }}>
           <span className="warning-banner-icon" aria-hidden>⚠</span>
           {error}
+        </div>
+      )}
+
+      {commsSecretMissingCount > 0 && (
+        <div
+          style={{
+            margin: "0 0 12px",
+            padding: "10px 14px",
+            borderRadius: 8,
+            background: "var(--surface-2)",
+            border: "1px solid var(--line)",
+            color: "var(--fg)",
+            fontSize: 13,
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 10,
+          }}
+          role="note"
+        >
+          <span style={{ color: "var(--muted)", fontWeight: 600, flexShrink: 0 }}>
+            Email delivery
+          </span>
+          <span style={{ color: "var(--muted)" }}>
+            {commsSecretMissingCount} {commsSecretMissingCount === 1 ? "invite has" : "invites have"}{" "}
+            <code style={{ background: "var(--surface-1)", padding: "1px 4px", borderRadius: 4 }}>
+              comms_secret_not_configured
+            </code>{" "}
+            in the Email delivery column. This is a runtime configuration
+            issue — the <code style={{ background: "var(--surface-1)", padding: "1px 4px", borderRadius: 4 }}>COMMS_SHARED_SECRET</code>{" "}
+            environment variable is not set on the users-be service. Set the
+            secret in Cloud Run and resend the affected invites to clear the
+            flag. Acceptance links remain valid; only the email send failed.
+          </span>
         </div>
       )}
 
