@@ -1,26 +1,22 @@
 /**
- * Sovereign Portal shell chrome — Portal v3 (Stage 6 Deploy 2)
+ * Sovereign Portal shell chrome — Portal v3 (Slice 5.18c — mockup-aligned)
  *
- * - Dark sidebar (collapses to off-canvas drawer < 900px)
- * - Tenant switcher: two-section operator dropdown
- *     • OPERATOR SCOPE — "All Companies" virtual aggregate scope
- *     • IMPERSONATE — per-tenant company entries
- *   Non-operators see a disabled chip showing their own company.
- *   Operator-mode badge surfaces in the switcher summary AND the topbar
- *   when actively impersonating a tenant.
- * - Generic SVG icons next to each module name
- * - Module groups: Foundation (Dashboard / Companies / Workspaces / Users) and
- *   Service (Projects / Tasks / Reports — guide-only)
- * - Account entry in sidebar; topbar avatar links here too
- * - Generic footer with Privacy / Terms / Support / Status / About / © year
- * - Logout modal (UAM08): CSS-only checkbox toggle, no client JS
+ * Rewritten to emit class names from the canonical mockup CSS
+ * (portal-renders/pages/_shell.css → app/globals.css).
  *
- * No client JS dependency for the drawer — uses a sibling-selector CSS pattern
- * keyed off a hidden checkbox.
+ * Root container is .app, with .sidebar + .main inside.
+ * Sidebar uses .brand, .tenant-switcher, .section-label, plain <nav><a> children,
+ * and .foot. Topbar uses .crumbs / .right / .icon-btn.
+ *
+ * Public release styling = black/white/grey only. No ThemeToggle, no dark mode.
+ * Drawer + logout modal are deferred to a later slice — the public release will
+ * use the standard /api/logout form posted directly from the topbar pulldown.
+ *
+ * The ChromeProps interface and TenantOption/ActiveSection exports are kept
+ * stable so existing dashboard pages compile unchanged.
  */
 
 import type { ReactNode } from "react";
-import { ThemeToggle } from "./ThemeToggle";
 
 export type ActiveSection =
   | "dashboard"
@@ -63,137 +59,30 @@ interface NavItem {
   href: string;
   /** If true, only renders when user.isOperator */
   operatorOnly?: boolean;
-  /** Renders a divider above this nav item */
+  /** Renders a section label above this nav item */
   groupStart?: string;
   /** True = guide-only module (Projects/Tasks/Reports) */
   guideOnly?: boolean;
-  icon: ReactNode;
+  /** Glyph emitted inside the <span class="icon"> */
+  icon: string;
 }
 
 /* ------------------------------------------------------------------ */
-/* Inline SVG icons (no external deps).                               */
-/* All icons are 18×18, stroke=currentColor, 1.6px, rounded.          */
+/* Nav definition — glyphs match the mockup HTML samples.             */
 /* ------------------------------------------------------------------ */
-const stroke = {
-  fill: "none" as const,
-  stroke: "currentColor",
-  strokeWidth: 1.6,
-  strokeLinecap: "round" as const,
-  strokeLinejoin: "round" as const,
-};
-
-const IconDashboard = (
-  <svg viewBox="0 0 24 24" width="18" height="18" {...stroke}>
-    <rect x="3" y="3" width="7" height="9" rx="1.5" />
-    <rect x="14" y="3" width="7" height="5" rx="1.5" />
-    <rect x="14" y="12" width="7" height="9" rx="1.5" />
-    <rect x="3" y="16" width="7" height="5" rx="1.5" />
-  </svg>
-);
-const IconCompanies = (
-  <svg viewBox="0 0 24 24" width="18" height="18" {...stroke}>
-    <path d="M3 21V8a1 1 0 0 1 1-1h7v14" />
-    <path d="M11 21V4a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v17" />
-    <path d="M6 11h2M6 14h2M6 17h2M15 7h2M15 10h2M15 13h2M15 16h2" />
-  </svg>
-);
-const IconWorkspaces = (
-  <svg viewBox="0 0 24 24" width="18" height="18" {...stroke}>
-    <rect x="3" y="4" width="18" height="14" rx="2" />
-    <path d="M3 9h18M8 18v3M16 18v3M6 21h12" />
-  </svg>
-);
-const IconUsers = (
-  <svg viewBox="0 0 24 24" width="18" height="18" {...stroke}>
-    <circle cx="9" cy="8" r="3" />
-    <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" />
-    <circle cx="17" cy="10" r="2.4" />
-    <path d="M14.5 20c0-2.5 1.6-4.6 3.5-5.3 1.9.7 3.5 2.8 3.5 5.3" />
-  </svg>
-);
-const IconAccount = (
-  <svg viewBox="0 0 24 24" width="18" height="18" {...stroke}>
-    <circle cx="12" cy="8" r="4" />
-    <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" />
-  </svg>
-);
-const IconProjects = (
-  <svg viewBox="0 0 24 24" width="18" height="18" {...stroke}>
-    <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" />
-    <path d="M8 13h8M8 16h5" />
-  </svg>
-);
-const IconTasks = (
-  <svg viewBox="0 0 24 24" width="18" height="18" {...stroke}>
-    <rect x="4" y="4" width="16" height="16" rx="2" />
-    <path d="M8 9l2 2 4-4M8 15l2 2 4-4" />
-  </svg>
-);
-const IconReports = (
-  <svg viewBox="0 0 24 24" width="18" height="18" {...stroke}>
-    <path d="M4 19V5a2 2 0 0 1 2-2h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
-    <path d="M14 3v5h5M8 13l2.5 2.5L13 13l3 3" />
-  </svg>
-);
-const IconLogout = (
-  <svg viewBox="0 0 24 24" width="18" height="18" {...stroke}>
-    <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" />
-    <path d="M10 17l-5-5 5-5M5 12h12" />
-  </svg>
-);
-const IconLogoutLg = (
-  <svg viewBox="0 0 24 24" width="24" height="24" {...stroke}>
-    <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" />
-    <path d="M10 17l-5-5 5-5M5 12h12" />
-  </svg>
-);
-const IconChevron = (
-  <svg viewBox="0 0 24 24" width="14" height="14" {...stroke}>
-    <path d="M6 9l6 6 6-6" />
-  </svg>
-);
-const IconBell = (
-  <svg viewBox="0 0 24 24" width="18" height="18" {...stroke}>
-    <path d="M6 8a6 6 0 1 1 12 0c0 4 1.5 6 2 7H4c.5-1 2-3 2-7z" />
-    <path d="M10 19a2 2 0 0 0 4 0" />
-  </svg>
-);
-const IconMenu = (
-  <svg viewBox="0 0 24 24" width="22" height="22" {...stroke}>
-    <path d="M4 7h16M4 12h16M4 17h16" />
-  </svg>
-);
-const IconShield = (
-  <svg viewBox="0 0 24 24" width="12" height="12" {...stroke}>
-    <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z" />
-    <path d="M9 12l2 2 4-4" />
-  </svg>
-);
-const IconActivity = (
-  <svg viewBox="0 0 24 24" width="22" height="22" {...stroke}>
-    <path d="M3 12h4l3-8 4 16 3-8h4" />
-  </svg>
-);
-const IconEnvelope = (
-  <svg viewBox="0 0 24 24" width="18" height="18" {...stroke}>
-    <rect x="3" y="5" width="18" height="14" rx="2" />
-    <path d="M3 7l9 6 9-6" />
-  </svg>
-);
 
 const NAV_ITEMS: NavItem[] = [
-  { key: "dashboard", label: "Dashboard", href: "/dashboard", icon: IconDashboard },
-  { key: "companies", label: "Companies", href: "/dashboard/companies", icon: IconCompanies },
-  { key: "workspaces", label: "Workspaces", href: "/dashboard/workspaces", icon: IconWorkspaces },
-  { key: "users", label: "Users", href: "/dashboard/users/list", icon: IconUsers, operatorOnly: true },
-  { key: "portal-settings", label: "Portal Settings", href: "/dashboard/portal-settings", icon: IconShield, operatorOnly: true },
-  { key: "audit", label: "Audit Log", href: "/dashboard/audit", icon: IconActivity, operatorOnly: true },
-  { key: "invites", label: "Invites", href: "/dashboard/invites", icon: IconEnvelope, operatorOnly: true },
-  // (Account moved from sidebar to the topbar user pulldown in Deploy 5.15)
-  // Service modules — guide-only, separated by divider
-  { key: "projects", label: "Projects", href: "/dashboard/projects", icon: IconProjects, guideOnly: true, groupStart: "Service Modules" },
-  { key: "tasks", label: "Tasks", href: "/dashboard/tasks", icon: IconTasks, guideOnly: true },
-  { key: "reports", label: "Reports", href: "/dashboard/reports", icon: IconReports, guideOnly: true },
+  { key: "dashboard", label: "Dashboard", href: "/dashboard", icon: "⌂", groupStart: "Modules" },
+  { key: "companies", label: "Customers", href: "/dashboard/companies", icon: "◉" },
+  { key: "workspaces", label: "Workspaces", href: "/dashboard/workspaces", icon: "◧" },
+  { key: "users", label: "Users", href: "/dashboard/users/list", icon: "◐", operatorOnly: true },
+  { key: "portal-settings", label: "Portal Settings", href: "/dashboard/portal-settings", icon: "⚙", operatorOnly: true, groupStart: "System" },
+  { key: "audit", label: "Audit feed", href: "/dashboard/audit", icon: "≡", operatorOnly: true },
+  { key: "invites", label: "Invites", href: "/dashboard/invites", icon: "✉", operatorOnly: true },
+  // Service modules — guide-only
+  { key: "projects", label: "Projects", href: "/dashboard/projects", icon: "▤", guideOnly: true, groupStart: "Service" },
+  { key: "tasks", label: "Tasks", href: "/dashboard/tasks", icon: "▣", guideOnly: true },
+  { key: "reports", label: "Reports", href: "/dashboard/reports", icon: "▦", guideOnly: true },
 ];
 
 function initials(name?: string, fallback = "?"): string {
@@ -213,93 +102,75 @@ function TenantSwitcher({
   activeCompany?: { companyId?: string; name: string } | null;
   tenantOptions: TenantOption[];
 }) {
-  const isImpersonating = isOperator && Boolean(activeCompany?.companyId);
   const aggregateLabel = "All Companies";
   const summaryLabel = activeCompany?.name ?? (isOperator ? aggregateLabel : "Sovereign Portal");
+  const hintLabel = isOperator ? (activeCompany?.companyId ? "Impersonating" : "Operator scope") : "Tenant";
 
   if (!isOperator) {
-    // Non-operator: visible but disabled chip
+    // Non-operator: visible but inert chip
     return (
-      <div className="sidebar-switcher is-disabled" aria-disabled="true" title="Locked to your company">
-        <span className="sidebar-switcher-label">{summaryLabel}</span>
-        <span className="sidebar-switcher-chevron" aria-hidden>
-          {IconChevron}
-        </span>
+      <div className="tenant-switcher" aria-disabled="true" title="Locked to your company">
+        <div className="label">
+          <span className="hint">{hintLabel}</span>
+          <span>{summaryLabel}</span>
+        </div>
+        <span className="chev">▾</span>
       </div>
     );
   }
 
-  // Operator: details/summary for a no-JS pure-CSS dropdown.
-  // Two sections: OPERATOR SCOPE (All Companies) + IMPERSONATE (per-tenant).
+  // Operator: pure-CSS <details> dropdown
   return (
-    <details className="sidebar-switcher-details">
-      <summary className="sidebar-switcher">
-        <span className="sidebar-switcher-summary-text">
-          <span className="sidebar-switcher-label">{summaryLabel}</span>
-          {isImpersonating && (
-            <span className="sidebar-switcher-mode-badge" aria-label="Operator impersonating">
-              {IconShield}
-              <span>OPERATOR MODE</span>
-            </span>
-          )}
-        </span>
-        <span className="sidebar-switcher-chevron" aria-hidden>
-          {IconChevron}
-        </span>
+    <details className="tenant-switcher-details">
+      <summary className="tenant-switcher">
+        <div className="label">
+          <span className="hint">{hintLabel}</span>
+          <span>{summaryLabel}</span>
+        </div>
+        <span className="chev">▾</span>
       </summary>
-      <div className="sidebar-switcher-menu" role="menu">
-        <div className="sidebar-switcher-section-label">Operator scope</div>
-        <form action="/api/admin/active-tenant" method="post" className="sidebar-switcher-form">
+      <div className="overlay" role="menu" style={{ marginTop: 6 }}>
+        <div className="section-label">Operator scope</div>
+        <form action="/api/admin/active-tenant" method="post" style={{ margin: 0 }}>
           <button
             type="submit"
             name="companyId"
             value=""
-            className={`sidebar-switcher-item ${!activeCompany?.companyId ? "is-active" : ""}`}
+            className={`row ${!activeCompany?.companyId ? "active" : ""}`}
+            style={{ width: "100%", border: "none", background: "transparent", textAlign: "left", padding: "8px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}
           >
-            <span className="sidebar-switcher-item-dot is-aggregate" aria-hidden />
-            <span>All Companies</span>
-            <span className="sidebar-switcher-item-hint">Aggregate</span>
+            <span className="dot" aria-hidden />
+            <div className="body">
+              <div className="title">All Companies</div>
+            </div>
+            <span className="right">Aggregate</span>
           </button>
         </form>
 
-        <div className="sidebar-switcher-section-label">Impersonate</div>
+        <div className="sep-line" />
+        <div className="section-label">Impersonate</div>
         {tenantOptions.length === 0 ? (
-          <div className="sidebar-switcher-empty">No tenants available</div>
+          <div className="row" style={{ color: "var(--fg-subtle)" }}>No tenants available</div>
         ) : (
           tenantOptions.map((t) => (
-            <form key={t.companyId} action="/api/admin/active-tenant" method="post" className="sidebar-switcher-form">
+            <form key={t.companyId} action="/api/admin/active-tenant" method="post" style={{ margin: 0 }}>
               <button
                 type="submit"
                 name="companyId"
                 value={t.companyId}
-                className={`sidebar-switcher-item ${activeCompany?.companyId === t.companyId ? "is-active" : ""}`}
+                className={`row ${activeCompany?.companyId === t.companyId ? "active" : ""}`}
+                style={{ width: "100%", border: "none", background: "transparent", textAlign: "left", padding: "8px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}
               >
-                <span className="sidebar-switcher-item-dot" aria-hidden />
-                <span>{t.name}</span>
+                <span className="dot" aria-hidden />
+                <div className="body">
+                  <div className="title">{t.name}</div>
+                </div>
               </button>
             </form>
           ))
         )}
       </div>
     </details>
-  );
-}
-
-function Footer() {
-  const year = new Date().getFullYear();
-  return (
-    <footer className="footer">
-      <div className="footer-inner">
-        <div className="footer-links">
-          <a href="/privacy">Privacy</a>
-          <a href="/terms">Terms</a>
-          <a href="/support">Support</a>
-          <a href="/status">Status</a>
-          <a href="/about">About</a>
-        </div>
-        <div className="footer-copy">© {year} Sovereign Portal</div>
-      </div>
-    </footer>
   );
 }
 
@@ -314,63 +185,30 @@ export function Chrome({
   const isOperator = Boolean(user.isOperator);
   const isImpersonating = isOperator && Boolean(activeCompany?.companyId);
   const visibleNav = NAV_ITEMS.filter((it) => !it.operatorOnly || isOperator);
-
   const displayName = user.displayName ?? "Signed in";
-  const handle = user.handle ?? "";
+  const roleLabel = isImpersonating
+    ? `Operator · ${activeCompany?.name ?? ""}`
+    : isOperator
+    ? "Operator"
+    : activeCompany?.name ?? "";
+
+  // Group nav items by groupStart so we can interleave <div class="section-label">
+  // + <nav> blocks the way the mockup does.
+  const groups: { label: string; items: NavItem[] }[] = [];
+  for (const it of visibleNav) {
+    if (it.groupStart || groups.length === 0) {
+      groups.push({ label: it.groupStart ?? "Modules", items: [it] });
+    } else {
+      groups[groups.length - 1]!.items.push(it);
+    }
+  }
 
   return (
-    <div className="shell">
-      {/* Hidden checkbox — mobile drawer open/close */}
-      <input type="checkbox" id="drawer-toggle" className="drawer-toggle" aria-hidden />
-      <label htmlFor="drawer-toggle" className="drawer-backdrop" aria-hidden />
-
-      {/* Hidden checkbox — logout modal */}
-      <input type="checkbox" id="logout-modal" className="modal-toggle" aria-hidden />
-      <label htmlFor="logout-modal" className="modal-backdrop" aria-hidden />
-
-      {/* LOGOUT MODAL (UAM08) */}
-      <div className="modal" role="dialog" aria-modal="true" aria-labelledby="logout-modal-title">
-        <div className="modal-icon-circle" aria-hidden>{IconLogoutLg}</div>
-        <h2 className="modal-header-title" id="logout-modal-title">
-          Log Out of Sovereign Portal?
-        </h2>
-        <p className="modal-header-sub">
-          You&apos;ll be returned to the sign-in screen. Your data and settings are safely saved.
-        </p>
-
-        {/* User identity sub-card */}
-        <div className="user-mini-card">
-          <span
-            className="avatar-circle"
-            aria-hidden
-            style={{ background: "var(--violet-soft)", color: "var(--violet)" }}
-          >
-            {initials(displayName)}
-          </span>
-          <div className="user-mini-card-info">
-            <p className="user-mini-card-name">{displayName}</p>
-            {handle && <p className="user-mini-card-handle">@{handle}</p>}
-          </div>
-          <span className="status-pill is-active" style={{ flexShrink: 0 }}>Active</span>
-        </div>
-
-        <div className="modal-actions">
-          <label htmlFor="logout-modal" className="btn btn-ghost" style={{ cursor: "pointer" }}>
-            Cancel
-          </label>
-          <form action="/api/logout" method="post" style={{ margin: 0 }}>
-            <button type="submit" className="btn btn-primary">
-              Log out
-            </button>
-          </form>
-        </div>
-      </div>
-
+    <div className="app">
       <aside className="sidebar">
-        <div className="sidebar-logo">
-          <span className="sidebar-logo-mark" aria-hidden>
-            <span className="sidebar-logo-mark-inner">SP</span>
-          </span>
+        <div className="brand">
+          <div className="mark">S</div>
+          <div>Sovereign Portal</div>
         </div>
 
         <TenantSwitcher
@@ -379,90 +217,112 @@ export function Chrome({
           tenantOptions={tenantOptions}
         />
 
-        <nav className="sidebar-nav" aria-label="Primary">
-          {visibleNav.map((it) => (
-            <span key={it.key} style={{ display: "contents" }}>
-              {it.groupStart && (
-                <div className="sidebar-nav-group">
-                  <span>{it.groupStart}</span>
-                </div>
-              )}
-              <a
-                href={it.href}
-                className={`sidebar-nav-item ${active === it.key ? "is-active" : ""}`}
-              >
-                <span className="sidebar-nav-icon" aria-hidden>{it.icon}</span>
-                <span className="sidebar-nav-label">{it.label}</span>
-                {it.guideOnly && <span className="sidebar-nav-tag">Guide</span>}
-              </a>
-            </span>
-          ))}
-        </nav>
+        {groups.map((grp, gi) => (
+          <span key={`${grp.label}-${gi}`} style={{ display: "contents" }}>
+            <div className="section-label">{grp.label}</div>
+            <nav aria-label={grp.label}>
+              {grp.items.map((it) => (
+                <a
+                  key={it.key}
+                  href={it.href}
+                  className={active === it.key ? "active" : ""}
+                >
+                  <span className="icon" aria-hidden>{it.icon}</span>
+                  {it.label}
+                  {it.guideOnly && <span className="badge">Guide</span>}
+                </a>
+              ))}
+            </nav>
+          </span>
+        ))}
 
-        <div className="sidebar-footer">
-          {/* Log Out — triggers modal instead of direct form submit */}
-          <label htmlFor="logout-modal" className="sidebar-logout" style={{ cursor: "pointer" }}>
-            <span className="sidebar-nav-icon" aria-hidden>{IconLogout}</span>
-            <span>Log Out</span>
-          </label>
+        <div className="foot">
+          <div className="avatar">{initials(displayName)}</div>
+          <div className="who">
+            <span className="name">{displayName}</span>
+            {roleLabel && <span className="role">{roleLabel}</span>}
+          </div>
         </div>
       </aside>
 
-      <main className="main">
-        <header className="topbar">
-          <label htmlFor="drawer-toggle" className="topbar-menu" aria-label="Open menu">
-            {IconMenu}
-          </label>
-          <div className="topbar-title-wrap">
-            <h1 className="topbar-title">{pageTitle}</h1>
+      <div className="main">
+        <div className="topbar">
+          <div className="crumbs">
+            {activeCompany?.name && (
+              <>
+                <span>{activeCompany.name}</span>
+                <span className="sep">/</span>
+              </>
+            )}
+            <span className="current">{pageTitle}</span>
             {isImpersonating && (
-              <span className="topbar-op-badge" aria-label="Operator impersonating">
-                {IconShield}
-                <span>OPERATOR MODE · {activeCompany?.name}</span>
+              <span
+                className="tag"
+                style={{ marginLeft: 8 }}
+                title="Operator impersonating"
+              >
+                OPERATOR MODE
               </span>
             )}
           </div>
-          <div className="topbar-actions">
-            <ThemeToggle />
-            <button type="button" className="topbar-bell" aria-label="Notifications">
-              {IconBell}
-              <span className="topbar-bell-dot" aria-hidden />
-            </button>
+          <div className="right">
+            <button type="button" className="icon-btn has-dot" title="Notifications" aria-label="Notifications">◔</button>
             <details className="topbar-user-menu">
               <summary
-                className={`topbar-user ${active === "account" ? "is-active" : ""}`}
+                className="icon-btn"
                 aria-label="Account menu"
+                style={{ display: "inline-flex", alignItems: "center", gap: 8, paddingLeft: 8, paddingRight: 8, width: "auto" }}
               >
-                <span className="topbar-avatar" aria-hidden>{initials(user.displayName)}</span>
-                <span className="topbar-user-name">{user.displayName ?? "Signed in"}</span>
-                <span className="topbar-user-chevron" aria-hidden>{IconChevron}</span>
+                <span
+                  aria-hidden
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 22,
+                    height: 22,
+                    borderRadius: "50%",
+                    background: "#0f0f0f",
+                    color: "#fff",
+                    fontSize: 10,
+                    fontWeight: 600,
+                  }}
+                >
+                  {initials(user.displayName)}
+                </span>
+                <span style={{ fontSize: 12.5, color: "var(--fg-muted)" }}>{user.displayName ?? "Signed in"}</span>
               </summary>
-              <div className="topbar-user-dropdown" role="menu">
+              <div className="overlay" role="menu" style={{ position: "absolute", right: 24, top: 56, minWidth: 200 }}>
                 <a
                   href="/dashboard/users/account"
-                  className="topbar-user-dropdown-item"
+                  className="row"
                   role="menuitem"
+                  style={{ textDecoration: "none", color: "inherit" }}
                 >
-                  <span className="topbar-user-dropdown-icon" aria-hidden>{IconAccount}</span>
-                  <span>Account</span>
+                  <div className="body">
+                    <div className="title">Account</div>
+                  </div>
                 </a>
-                <label
-                  htmlFor="logout-modal"
-                  className="topbar-user-dropdown-item"
-                  role="menuitem"
-                  style={{ cursor: "pointer" }}
-                >
-                  <span className="topbar-user-dropdown-icon" aria-hidden>{IconLogout}</span>
-                  <span>Log out</span>
-                </label>
+                <div className="sep-line" />
+                <form action="/api/logout" method="post" style={{ margin: 0 }}>
+                  <button
+                    type="submit"
+                    className="row"
+                    role="menuitem"
+                    style={{ width: "100%", border: "none", background: "transparent", textAlign: "left", padding: "8px 10px", cursor: "pointer", color: "var(--danger)" }}
+                  >
+                    <div className="body">
+                      <div className="title">Log out</div>
+                    </div>
+                  </button>
+                </form>
               </div>
             </details>
           </div>
-        </header>
+        </div>
 
         <div className="content">{children}</div>
-        <Footer />
-      </main>
+      </div>
     </div>
   );
 }
