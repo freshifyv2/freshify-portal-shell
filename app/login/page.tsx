@@ -12,6 +12,7 @@
 import { redirect } from "next/navigation";
 import { readSessionToken, decodeClaims } from "@/lib/session";
 import LoginTabs from "./LoginTabs";
+import "./auth.css";
 
 export const dynamic = "force-dynamic";
 

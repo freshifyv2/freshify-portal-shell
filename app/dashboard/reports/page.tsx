@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { Chrome } from "@/lib/Chrome";
-import { loadChromeContext } from "@/lib/chromeContext";
+import { Chrome } from "@freshifyv2/portal-shell-ui";
+import { loadChromeContext } from "@freshifyv2/portal-shell-ui";
 import { ModuleGuide } from "@/lib/ModuleGuide";
 
 export const dynamic = "force-dynamic";

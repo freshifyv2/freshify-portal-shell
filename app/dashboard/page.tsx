@@ -9,8 +9,8 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { readSessionToken, decodeClaims } from "@/lib/session";
-import { Chrome } from "@/lib/Chrome";
-import { loadChromeContext } from "@/lib/chromeContext";
+import { Chrome } from "@freshifyv2/portal-shell-ui";
+import { loadChromeContext } from "@freshifyv2/portal-shell-ui";
 import { RecentActivity, type AuditEntry } from "./RecentActivity";
 
 export const dynamic = "force-dynamic";

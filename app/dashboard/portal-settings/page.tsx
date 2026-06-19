@@ -8,8 +8,8 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { readSessionToken, decodeClaims } from "@/lib/session";
-import { Chrome } from "@/lib/Chrome";
-import { loadChromeContext } from "@/lib/chromeContext";
+import { Chrome } from "@freshifyv2/portal-shell-ui";
+import { loadChromeContext } from "@freshifyv2/portal-shell-ui";
 import { PortalSettingsForm, type PortalSettings } from "./PortalSettingsForm";
 
 export const dynamic = "force-dynamic";

@@ -1,4 +1,4 @@
-import "./globals.css";
+import "@freshifyv2/portal-shell-ui/globals.css";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
