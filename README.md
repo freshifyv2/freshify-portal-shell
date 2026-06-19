@@ -1,23 +1,51 @@
 # freshify-portal-shell
 
-The **Sovereign Portal** shell. The single hostname users interact with.
+The **Sovereign Portal** shell — the single hostname users interact with.
 
-## Composition
+The shell is intentionally thin. It owns the navigation chrome, the tenant switcher, the cross-module routing layer, the audit feed surface, the pre-auth screens (login / signup / password reset), and the legacy-redirect handler. Every actual feature lives in a sovereign module mounted underneath it.
 
-Every `/dashboard/*` path is forwarded to a sovereign module FE via Next.js
-server-side rewrites (configured in `next.config.mjs`).
+## Role in the foundation
 
-| Path | Backend FE |
+| Surface | What this app owns |
 |---|---|
-| `/login` · `/api/otp/*` · `/api/logout` | `freshify-users-fe` |
-| `/dashboard/users/*` | `freshify-users-fe` |
-| `/dashboard/companies/*` | `freshify-companies-fe` |
-| `/dashboard/workspaces/*` | `freshify-workspaces-fe` |
+| Routes | `/login`, `/signup`, `/reset`, `/dashboard`, `/dashboard/audit`, tenant switcher endpoint |
+| Rewrites | `/dashboard/users/*` → `freshify-users-fe`, `/dashboard/companies/*` → `freshify-companies-fe`, `/dashboard/workspaces/*` → `freshify-workspaces-fe`, plus every module installed at runtime |
+| Session | Reads the user JWT, resolves the active tenant, surfaces the tenant switcher in the topbar |
+| Audit | Renders the cross-module audit feed produced by every sovereign module |
 
-The shell itself owns:
-- `/` — public landing
-- `/dashboard` — authenticated landing
-- The `sp_session` httpOnly cookie (set by users-fe's `/api/otp/verify`, read by every module FE)
+This is framework infrastructure. The shell knows nothing about Users, Companies, or Workspaces specifically — it discovers them through the [Standard Module Interface](https://github.com/freshifyv2/freshify-sovereign-portal/blob/main/docs/smi-spec.md) at runtime.
 
-## Stack
-Next.js 14 App Router · TypeScript · Cloud Run (Docker, port 8080)
+## Run locally
+
+```bash
+npm install
+cp .env.example .env  # set USERS_BASE_URL, COMPANIES_BASE_URL, WORKSPACES_BASE_URL, etc.
+npm run dev
+```
+
+Defaults to `http://localhost:3000`. The shell expects the four reference backends and three reference frontends to be running on their default ports (see the umbrella `docker-compose.yml` for the full local topology).
+
+## Environment
+
+| Variable | Required | Notes |
+|---|---|---|
+| `USER_JWT_SECRET` | yes | HS256 verification secret for user sessions |
+| `USERS_BASE_URL` / `USERS_FE_URL` | yes | Backend + frontend URLs for the Users module |
+| `COMPANIES_BASE_URL` / `COMPANIES_FE_URL` | yes | Same for Companies |
+| `WORKSPACES_BASE_URL` / `WORKSPACES_FE_URL` | yes | Same for Workspaces |
+| `COMMS_BASE_URL` | yes | Used by pre-auth flows to send verification + reset emails |
+| `PORT` | no | Defaults to `3000` |
+
+## Conformance
+
+The shell is framework infrastructure, not a sovereign module — it does not export a Module Registry. It does, however, consume the registries every module exports. See [`docs/smi-spec.md`](https://github.com/freshifyv2/freshify-sovereign-portal/blob/main/docs/smi-spec.md) for the contract the shell expects from every module it mounts.
+
+## License
+
+Apache 2.0. See [LICENSE](./LICENSE) and [NOTICE](./NOTICE). Copyright 2026 Freshify, Inc.
+
+## Support
+
+- Bugs and feature requests: open an issue. Read [CONTRIBUTING.md](./CONTRIBUTING.md) first.
+- Security disclosures: see [SECURITY.md](./SECURITY.md). Do not open a public issue.
+- Production deployment, custom modules, architecture review: see [SUPPORT.md](./SUPPORT.md).
