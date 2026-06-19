@@ -82,9 +82,14 @@ export function ModuleGuide({
           The {moduleName} module is not yet wired up in this build. Commission a
           custom sovereign module — own its data, its UI, and its lifecycle.
         </p>
-        <button type="button" className="btn btn-primary" disabled>
-          Request {moduleName} module
-        </button>
+        <a
+          href={`https://freshify.io/contact?module=${encodeURIComponent(moduleName)}&utm_source=sovereign-portal&utm_medium=module-guide&utm_campaign=request-module`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn btn-primary"
+        >
+          Request {moduleName} module →
+        </a>
       </div>
     </>
   );
