@@ -39,7 +39,46 @@
   --input-border: var(--border-strong);
   --danger: #b91c1c;
   --success: #166534;
+  /* Neutral aliases for legacy violet references — public-release theme is black/white/grey only. */
+  --violet: #0f0f0f;
+  --violet-2: #18181b;
+  --violet-soft: #f4f4f5;
+  --violet-soft-2: #e4e4e7;
+  --violet-tint: #f4f4f5;
+  --violet-text: #0f0f0f;
 }
+
+/* ---------------- Pills + badges (neutral palette) ---------------- */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  background: #f4f4f5;
+  color: #3f3f46;
+  border: 1px solid #e4e4e7;
+  white-space: nowrap;
+}
+.pill.is-violet { background: #f4f4f5; color: #0f0f0f; border-color: #e4e4e7; }
+.pill.is-gray { background: #f4f4f5; color: #71717a; border-color: #e4e4e7; }
+
+.metric-card-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: #f4f4f5;
+  color: #0f0f0f;
+  border: 1px solid #e4e4e7;
+}
+.metric-card-badge.is-violet { background: #0f0f0f; color: #ffffff; border-color: #0f0f0f; }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
