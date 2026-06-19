@@ -2,6 +2,8 @@
   "name": "freshify-portal-shell",
   "version": "0.1.0",
   "private": true,
+  "license": "Apache-2.0",
+  "author": "Freshify, Inc.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
