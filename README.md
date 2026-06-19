@@ -19,7 +19,7 @@ This is framework infrastructure. The shell knows nothing about Users, Companies
 
 ```bash
 npm install
-cp .env.example .env  # set USERS_BASE_URL, COMPANIES_BASE_URL, WORKSPACES_BASE_URL, etc.
+cp .env.example .env  # set USERS_SERVICE_URL, COMPANIES_SERVICE_URL, WORKSPACES_SERVICE_URL, etc.
 npm run dev
 ```
 
@@ -29,11 +29,10 @@ Defaults to `http://localhost:3000`. The shell expects the four reference backen
 
 | Variable | Required | Notes |
 |---|---|---|
-| `USER_JWT_SECRET` | yes | HS256 verification secret for user sessions |
-| `USERS_BASE_URL` / `USERS_FE_URL` | yes | Backend + frontend URLs for the Users module |
-| `COMPANIES_BASE_URL` / `COMPANIES_FE_URL` | yes | Same for Companies |
-| `WORKSPACES_BASE_URL` / `WORKSPACES_FE_URL` | yes | Same for Workspaces |
-| `COMMS_BASE_URL` | yes | Used by pre-auth flows to send verification + reset emails |
+| `USERS_SERVICE_URL` / `USERS_FE_URL` | yes | Backend + frontend URLs for the Users module |
+| `COMPANIES_SERVICE_URL` / `COMPANIES_FE_URL` | yes | Same for Companies |
+| `WORKSPACES_SERVICE_URL` / `WORKSPACES_FE_URL` | yes | Same for Workspaces |
+| `SESSION_COOKIE_NAME` | no | Defaults to `sp_session` |
 | `PORT` | no | Defaults to `3000` |
 
 ## Conformance
