@@ -1,9 +1,17 @@
 {
   "name": "freshify-portal-shell",
   "version": "0.1.0",
-  "private": true,
   "license": "Apache-2.0",
-  "author": "Freshify, Inc.",
+  "author": "Freshify, Inc. (https://freshify.io)",
+  "homepage": "https://github.com/freshifyv2/freshify-portal-shell#readme",
+  "bugs": {
+    "url": "https://github.com/freshifyv2/freshify-portal-shell/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/freshifyv2/freshify-portal-shell.git"
+  },
+  "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
