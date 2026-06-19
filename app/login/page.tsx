@@ -2,7 +2,7 @@
  * /login — RLG06 password sign-in page.
  *
  * Sprint 1 5.18g rebuild — replaces the Deploy-5.10 OTP-only flow with
- * email + password (RAS Reg/Login v1.0 default). The OtpLoginForm
+ * email + password (default auth path). The OtpLoginForm
  * component is retained in this directory for the demo/dev Twilio adapter
  * path but is no longer mounted on /login.
  *
