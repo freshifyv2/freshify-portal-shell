@@ -1,17 +1,17 @@
 /**
- * /login — RLG06 password sign-in page.
+ * /login — RLG06 sign-in page.
  *
- * Sprint 1 5.18g rebuild — replaces the Deploy-5.10 OTP-only flow with
- * email + password (default auth path). The OtpLoginForm
- * component is retained in this directory for the demo/dev Twilio adapter
- * path but is no longer mounted on /login.
- *
- * Server component. If sp_session is already present and decodes, redirect
- * to `next` (default /dashboard).
+ * Sprint 1 5.18g rebuilt this against the email + password flow as the
+ * default auth path. Sprint 3 restored the OTP form alongside it behind
+ * a tab — the underlying /api/auth/otp/{request,verify} routes have been
+ * live the entire time and continue to work. The actual tab toggling
+ * lives in the LoginTabs client component; this page stays a server
+ * component so the already-signed-in redirect can use server-side
+ * session cookies.
  */
 import { redirect } from "next/navigation";
 import { readSessionToken, decodeClaims } from "@/lib/session";
-import LoginForm from "./LoginForm";
+import LoginTabs from "./LoginTabs";
 
 export const dynamic = "force-dynamic";
 
@@ -42,8 +42,7 @@ export default function LoginPage({
           Sovereign Portal
         </div>
         <h1>Sign in</h1>
-        <p className="sub">Welcome back. Use your email and password.</p>
-        <LoginForm next={next} />
+        <LoginTabs next={next} />
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * OtpLoginForm — two-step OTP sign-in (Deploy 5.10).
+ * OtpLoginForm — two-step OTP sign-in (phone or email).
  *
  * Step 1 (identifier): operator types an E.164 phone or email, picks a
  *   channel, hits "Send code". We POST /api/auth/otp/request and stash
@@ -13,7 +13,11 @@
  *   re-checks identifier+channel, so they must be in the verify payload.
  *
  * On verify success the BFF sets the sp_session cookie; we just push the
- * router to `next`. Styling is driven by .login-* classes in globals.css.
+ * router to `next`.
+ *
+ * Sprint 3 — restyled against .auth-shell / .field / .banner vocabulary
+ * (the older .login-* classes were dropped in 5.18g). Mounted again on
+ * /login behind a tab via app/login/LoginTabs.tsx.
  */
 
 import { useState, FormEvent } from "react";
@@ -147,16 +151,15 @@ export default function OtpLoginForm({ next }: Props) {
 
   if (step === "identifier") {
     return (
-      <form onSubmit={onRequest} style={{ display: "grid", gap: 20 }}>
-        <div className="login-field">
-          <label htmlFor="channel" className="login-field-label">
-            Delivery channel
-          </label>
+      <form onSubmit={onRequest} noValidate>
+        {error ? <div className="banner danger">{error}</div> : null}
+
+        <div className="field">
+          <label htmlFor="otp-channel">Delivery channel</label>
           <select
-            id="channel"
+            id="otp-channel"
             value={channel}
             onChange={(e) => setChannel(e.target.value as Channel)}
-            className="field-input field-select"
             disabled={submitting}
           >
             <option value="sms">Text message (SMS)</option>
@@ -164,43 +167,38 @@ export default function OtpLoginForm({ next }: Props) {
           </select>
         </div>
 
-        <div className="login-field">
-          <label htmlFor="identifier" className="login-field-label">
+        <div className="field">
+          <label htmlFor="otp-identifier">
             {channel === "sms" ? "Phone number" : "Email address"}
           </label>
           <input
-            id="identifier"
+            id="otp-identifier"
             type={channel === "sms" ? "tel" : "email"}
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
             placeholder={
               channel === "sms" ? "+16085550100" : "you@example.com"
             }
-            className="field-input"
             autoComplete={channel === "sms" ? "tel" : "email"}
             disabled={submitting}
             required
           />
         </div>
 
-        {error && (
-          <div role="alert" className="login-banner-alert">
-            {error}
-          </div>
-        )}
+        <div className="actions">
+          <button
+            type="submit"
+            className="btn primary"
+            disabled={submitting || !identifier.trim()}
+          >
+            {submitting ? "Sending…" : "Send code"}
+          </button>
+        </div>
 
-        <button
-          type="submit"
-          className="btn btn-primary"
-          style={{ width: "100%", justifyContent: "center" }}
-          disabled={submitting || !identifier.trim()}
-        >
-          {submitting ? "Sending…" : "Send code"}
-        </button>
-
-        <p className="login-helper">
-          One-time codes only. No passwords. This portal is a reference
-          implementation of the Sovereign Modular Architecture.
+        <p className="auth-helper">
+          One-time codes only. Codes are delivered via your configured Twilio
+          adapter; the dev adapter accepts the bypass code printed by the
+          users service logs.
         </p>
       </form>
     );
@@ -208,27 +206,28 @@ export default function OtpLoginForm({ next }: Props) {
 
   // Step: code
   return (
-    <form onSubmit={onVerify} style={{ display: "grid", gap: 20 }}>
-      <div className="login-identity-banner">
+    <form onSubmit={onVerify} noValidate>
+      <div className="auth-identity-banner">
         <span>
           Signing in as <strong>{identifier}</strong>
         </span>
         <button
           type="button"
           onClick={reset}
-          className="login-link-button"
+          className="auth-link-button"
           disabled={submitting}
         >
           Change
         </button>
       </div>
 
-      <div className="login-field">
-        <label htmlFor="code" className="login-field-label">
-          One-time code
-        </label>
+      {info && !error ? <div className="banner success">{info}</div> : null}
+      {error ? <div className="banner danger">{error}</div> : null}
+
+      <div className="field">
+        <label htmlFor="otp-code">One-time code</label>
         <input
-          id="code"
+          id="otp-code"
           type="text"
           inputMode="numeric"
           autoComplete="one-time-code"
@@ -236,48 +235,36 @@ export default function OtpLoginForm({ next }: Props) {
           onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
           placeholder="••••••"
           maxLength={8}
-          className="field-input login-code-input"
+          className="auth-code-input"
           disabled={submitting}
           required
           autoFocus
         />
       </div>
 
-      <div className="login-field">
-        <label htmlFor="displayName" className="login-field-label">
-          Display name <span className="optional">(first-time sign-in only)</span>
+      <div className="field">
+        <label htmlFor="otp-display-name">
+          Display name (first-time sign-in only)
         </label>
         <input
-          id="displayName"
+          id="otp-display-name"
           type="text"
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           placeholder="Optional"
-          className="field-input"
           disabled={submitting}
         />
       </div>
 
-      {info && !error && (
-        <div role="status" className="login-banner-info">
-          {info}
-        </div>
-      )}
-
-      {error && (
-        <div role="alert" className="login-banner-alert">
-          {error}
-        </div>
-      )}
-
-      <button
-        type="submit"
-        className="btn btn-primary"
-        style={{ width: "100%", justifyContent: "center" }}
-        disabled={submitting || !code.trim()}
-      >
-        {submitting ? "Verifying…" : "Verify and sign in"}
-      </button>
+      <div className="actions">
+        <button
+          type="submit"
+          className="btn primary"
+          disabled={submitting || !code.trim()}
+        >
+          {submitting ? "Verifying…" : "Verify and sign in"}
+        </button>
+      </div>
     </form>
   );
 }

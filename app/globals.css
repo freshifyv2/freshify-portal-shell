@@ -558,6 +558,78 @@ table.t tbody tr:hover { background: var(--bg-elev); }
 .banner.danger { border-color: #fecaca; background: #fef2f2; color: var(--danger); }
 .banner.success { border-color: #bbf7d0; background: #f0fdf4; color: var(--success); }
 
+/* Auth tabs (Email/Password vs Phone OTP on /login) */
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-bottom: 18px;
+}
+.auth-tab {
+  appearance: none;
+  background: transparent;
+  border: none;
+  padding: 8px 12px;
+  border-radius: calc(var(--radius-md) - 2px);
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--fg-muted);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+}
+.auth-tab:hover { color: var(--fg); }
+.auth-tab.is-active {
+  background: var(--bg);
+  color: var(--fg);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+.auth-tab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(15, 15, 15, 0.12);
+}
+.auth-identity-banner {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-elev);
+  font-size: 12.5px;
+  color: var(--fg-muted);
+  margin-bottom: 14px;
+}
+.auth-identity-banner strong { color: var(--fg); font-weight: 600; }
+.auth-link-button {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--fg);
+  font-weight: 550;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  font: inherit;
+}
+.auth-link-button:disabled { opacity: 0.55; cursor: not-allowed; }
+.auth-code-input {
+  letter-spacing: 0.3em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-size: 16px;
+}
+.auth-helper {
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--fg-subtle);
+  line-height: 1.5;
+}
+
 /* ---------------- Narrow viewport fallback ---------------- */
 @media (max-width: 768px) {
   .app { grid-template-columns: 1fr; }
