@@ -36,6 +36,22 @@ const nextConfig = {
         destination: "/dashboard/users/settings",
         permanent: true,
       },
+      // Sprint 4 / C7 — legacy /module-settings paths redirect to canonical /settings.
+      {
+        source: "/dashboard/companies/module-settings",
+        destination: "/dashboard/companies/settings",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/users/module-settings",
+        destination: "/dashboard/users/settings",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/workspaces/module-settings",
+        destination: "/dashboard/workspaces/settings",
+        permanent: true,
+      },
     ];
   },
   async rewrites() {
