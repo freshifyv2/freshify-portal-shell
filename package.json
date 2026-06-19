@@ -21,7 +21,7 @@
     "next": "14.2.5",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "@freshifyv2/portal-shell-ui": "github:freshifyv2/freshify-portal-shell-ui#9fa889ea3425ea1861928c221ff0bfb1f6d554da"
+    "@freshifyv2/portal-shell-ui": "github:freshifyv2/freshify-portal-shell-ui#d6f4fdd3fb58ffa0262a0b15f320d3da0b450195"
   },
   "devDependencies": {
     "@types/node": "20.14.10",
