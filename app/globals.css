@@ -1116,3 +1116,26 @@ table.t tbody tr:hover { background: var(--bg-elev); }
 .company-row-card-icon > svg { width: 18px; height: 18px; }
 .workspace-card-icon > svg { width: 18px; height: 18px; }
 .join-ws-icon > svg { width: 16px; height: 16px; }
+
+/* ---------------- Sprint 4.5 followup: missing vars + danger-zone ---------------- */
+:root {
+  --line: var(--border);
+  --red-text: var(--danger);
+}
+
+.danger-card {
+  background: var(--bg);
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.danger-card .section-card-header { border-bottom-color: #fecaca; background: #fef2f2; }
+.danger-card .section-card-title { color: var(--danger); }
+
+.controls-row-icon.is-red {
+  background: #fef2f2;
+  color: var(--danger);
+}
+.danger-card .controls-row-title { color: var(--danger); }
+.danger-card .controls-row { border-bottom-color: #fecaca; }
