@@ -637,3 +637,482 @@ table.t tbody tr:hover { background: var(--bg-elev); }
   .sidebar nav { padding: 0 12px; }
   .content { padding: 18px; }
 }
+
+/* ============================================================
+   Sprint 4.5 — Public-build polish.
+   Page-level styles missing from the Sprint 1 shell extraction:
+   dashboard metric tiles + list cards, account hero/section/
+   workspace/controls/danger-zone/modal, and inline icon sizing.
+   Black/white/grey only. No violet.
+   ============================================================ */
+
+/* ---------------- Dashboard greeting + metric tiles ---------------- */
+.page-greeting {
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  margin-bottom: 20px;
+  color: var(--fg);
+}
+
+.metrics-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+@media (max-width: 1200px) { .metrics-row { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 720px)  { .metrics-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.metric-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: var(--shadow-sm);
+  min-height: 100px;
+}
+.metric-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.metric-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: #f4f4f5;
+  color: #0f0f0f;
+  font-size: 14px;
+}
+.metric-card-body { display: flex; flex-direction: column; gap: 4px; }
+.metric-card-label {
+  font-size: 11.5px;
+  font-weight: 550;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+.metric-card-value {
+  font-size: 24px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------- Dashboard list cards + activity ---------------- */
+.lists-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+@media (max-width: 960px) { .lists-grid { grid-template-columns: 1fr; } }
+
+.list-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.list-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elev);
+}
+.list-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+.list-card-link {
+  font-size: 12.5px;
+  font-weight: 550;
+  color: var(--fg);
+  text-decoration: none;
+}
+.list-card-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.list-card-body { padding: 4px 0; }
+
+.user-cell-handle { color: var(--fg-muted); font-size: 12px; }
+
+/* ---------------- Data table (used in dashboard + account areas) ---------------- */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.data-table th, .data-table td {
+  text-align: left;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.data-table th {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  background: var(--bg-elev);
+}
+.data-table tr:last-child td { border-bottom: 0; }
+.data-table tbody tr:hover { background: var(--bg-elev); }
+
+/* ---------------- Account: hero card ---------------- */
+.hero-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+.hero-card-left { display: flex; align-items: center; gap: 16px; flex: 1; min-width: 0; }
+.hero-card-text { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.hero-card-status { align-self: flex-start; }
+.hero-card-title {
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--fg);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.hero-card-handle {
+  font-size: 14px;
+  font-weight: 450;
+  color: var(--fg-muted);
+  letter-spacing: 0;
+}
+.hero-card-actions { display: flex; gap: 8px; align-items: center; }
+
+.avatar-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f4f4f5;
+  color: #0f0f0f;
+  font-size: 13px;
+  font-weight: 600;
+}
+.avatar-circle.is-lg { width: 56px; height: 56px; font-size: 20px; font-weight: 650; }
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: #f4f4f5;
+  color: #0f0f0f;
+  border: 1px solid #e4e4e7;
+  width: fit-content;
+}
+.status-pill.is-active { background: #f0fdf4; color: var(--success); border-color: #bbf7d0; }
+.status-pill.is-inactive { background: #fef2f2; color: var(--danger); border-color: #fecaca; }
+
+/* ---------------- Account: 2-column grid + section labels ---------------- */
+.account-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+}
+@media (max-width: 960px) { .account-grid { grid-template-columns: 1fr; } }
+
+.section-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  margin-bottom: 10px;
+  margin-top: 4px;
+}
+.section-label > span { display: inline-flex; align-items: center; gap: 6px; }
+
+/* ---------------- Account: section + company row + workspace grid ---------------- */
+.section-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.section-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.section-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+
+.company-row-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+.company-row-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #f4f4f5;
+  color: #0f0f0f;
+  flex-shrink: 0;
+}
+.company-row-card-info { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+.company-row-card-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+}
+.company-row-card-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fg-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.workspace-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+@media (max-width: 720px) { .workspace-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.workspace-card {
+  padding: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.workspace-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: var(--fg-muted);
+}
+.workspace-card-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.workspace-card-role { font-size: 11px; }
+
+/* ---------------- Account: controls rows (System Controls + Danger Zone) ---------------- */
+.controls-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  color: var(--fg);
+  text-decoration: none;
+  background: var(--bg);
+  transition: background 0.12s ease;
+}
+.controls-row:last-child { border-bottom: 0; }
+.controls-row:hover { background: var(--bg-elev); }
+.controls-row-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #f4f4f5;
+  color: #0f0f0f;
+  flex-shrink: 0;
+}
+.controls-row-icon svg { width: 16px; height: 16px; display: block; }
+.controls-row-text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.controls-row-title {
+  font-size: 14px;
+  font-weight: 550;
+  color: var(--fg);
+}
+.controls-row-sub {
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+.controls-row-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-subtle);
+  flex-shrink: 0;
+}
+.controls-row-chevron svg { width: 16px; height: 16px; display: block; }
+
+.controls-row.is-danger .controls-row-icon { background: #fef2f2; color: var(--danger); }
+.controls-row.is-danger .controls-row-title { color: var(--danger); }
+
+/* ---------------- Account: modal (CSS-only checkbox-toggle) ---------------- */
+.modal-toggle { display: none; }
+.modal-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 15, 15, 0.45);
+  z-index: 50;
+  cursor: pointer;
+}
+.modal {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 64px);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  z-index: 51;
+  padding: 24px;
+  overflow-y: auto;
+}
+.modal-toggle:checked ~ .modal-backdrop,
+.modal-toggle:checked ~ .modal { display: block; }
+.modal-header-title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg);
+  margin-bottom: 6px;
+}
+.modal-header-sub {
+  font-size: 12px;
+  color: var(--fg-muted);
+  margin-bottom: 14px;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 14px;
+  margin-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.join-ws-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-bottom: 8px;
+}
+.join-ws-row.is-requested { background: var(--bg-elev); opacity: 0.7; }
+.join-ws-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #f4f4f5;
+  color: #0f0f0f;
+  flex-shrink: 0;
+}
+.join-ws-info { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+.join-ws-name { font-size: 13px; font-weight: 600; color: var(--fg); }
+.join-ws-meta { display: flex; align-items: center; gap: 8px; }
+
+/* ---------------- Button variants used by account + modal ---------------- */
+.btn-primary { background: #0f0f0f; color: #ffffff; border: 1px solid #0f0f0f; }
+.btn-primary:hover { background: #1a1a1a; }
+.btn-secondary { background: var(--bg); color: var(--fg); border: 1px solid var(--border-strong); }
+.btn-secondary:hover { background: var(--bg-elev); }
+.btn-ghost { background: transparent; color: var(--fg-muted); border: 1px solid transparent; cursor: pointer; }
+.btn-ghost:hover { color: var(--fg); background: var(--bg-elev); }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+
+/* Reuse base .btn shape if any of the above is used standalone. */
+.btn-primary, .btn-secondary, .btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 550;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+.btn-primary:disabled, .btn-secondary:disabled, .btn-ghost:disabled {
+  opacity: 0.55; cursor: not-allowed;
+}
+
+/* Inline icon defaults — keep SVG icons crisp inside controls/chevrons */
+.controls-row-icon, .controls-row-chevron, .company-row-card-icon, .workspace-card-icon, .join-ws-icon {
+  line-height: 0;
+}
+.controls-row-icon > svg, .controls-row-chevron > svg, .company-row-card-icon > svg, .workspace-card-icon > svg, .join-ws-icon > svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+}
+.company-row-card-icon > svg { width: 18px; height: 18px; }
+.workspace-card-icon > svg { width: 18px; height: 18px; }
+.join-ws-icon > svg { width: 16px; height: 16px; }

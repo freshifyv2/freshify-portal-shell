@@ -90,7 +90,10 @@ export async function loadChromeContext(): Promise<ChromeContext | null> {
   const handle = ((): string => {
     const e = claims.email;
     if (!e) return "user";
-    if (e.startsWith("+")) return e.replace(/[^0-9]/g, "");
+    // Synthetic phone-only users: `phone+<E164>@users.freshify.io` → render E.164.
+    const phoneMatch = e.match(/^phone\+?(\+?\d+)/);
+    if (phoneMatch) return `+${phoneMatch[1].replace(/[^0-9]/g, "")}`;
+    if (e.startsWith("+")) return e;
     return e.split("@")[0] || e;
   })();
 

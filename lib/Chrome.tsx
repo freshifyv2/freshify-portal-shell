@@ -225,7 +225,7 @@ export function Chrome({
                 <a
                   key={it.key}
                   href={it.href}
-                  className={active === it.key ? "active" : ""}
+                  className={(active === it.key || (active === "account" && it.key === "users")) ? "active" : ""}
                 >
                   <span className="icon" aria-hidden>{it.icon}</span>
                   {it.label}
