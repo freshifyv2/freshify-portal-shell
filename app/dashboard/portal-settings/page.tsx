@@ -10,7 +10,7 @@ import { redirect } from "next/navigation";
 import { readSessionToken, decodeClaims } from "@/lib/session";
 import { Chrome } from "@freshifyv2/portal-shell-ui";
 import { loadChromeContext } from "@freshifyv2/portal-shell-ui";
-import { PortalSettingsForm, type PortalSettings } from "./PortalSettingsForm";
+import { PortalSettingsForm, type PortalSettings, type CompanyOption } from "./PortalSettingsForm";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +53,9 @@ const DEFAULTS: PortalSettings = {
   audit: {
     retentionDays: 365,
   },
+  governance: {
+    portalOwnerCompanyId: null,
+  },
 };
 
 async function loadSettings(): Promise<PortalSettings> {
@@ -81,6 +84,7 @@ async function loadSettings(): Promise<PortalSettings> {
       invites: { ...DEFAULTS.invites, ...(data.invites ?? {}) },
       catalog: { ...DEFAULTS.catalog, ...(data.catalog ?? {}) },
       audit: { ...DEFAULTS.audit, ...(data.audit ?? {}) },
+      governance: { ...DEFAULTS.governance, ...(data.governance ?? {}) },
     };
   } catch {
     return DEFAULTS;
@@ -108,6 +112,7 @@ export default async function PortalSettingsPage() {
         user={chromeCtx?.user ?? { userId: claims.userId, displayName, handle, isOperator: false }}
         activeCompany={chromeCtx?.activeCompany ?? null}
         tenantOptions={chromeCtx?.tenantOptions ?? []}
+        portalOwnerCompanyId={chromeCtx?.portalOwnerCompanyId ?? null}
       >
         <div className="card" style={{ maxWidth: 640 }}>
           <h2 style={{ marginTop: 0 }}>Operator access required</h2>
@@ -121,6 +126,9 @@ export default async function PortalSettingsPage() {
   }
 
   const settings = await loadSettings();
+  // Portal Settings is operator-only. chromeCtx.tenantOptions already returns
+  // the full company list for operators, so we reuse it as the picker options.
+  const companies: CompanyOption[] = chromeCtx?.tenantOptions ?? [];
 
   return (
     <Chrome
@@ -130,6 +138,7 @@ export default async function PortalSettingsPage() {
       user={chromeCtx?.user ?? { userId: claims.userId, displayName, handle, isOperator: true }}
       activeCompany={chromeCtx?.activeCompany ?? null}
       tenantOptions={chromeCtx?.tenantOptions ?? []}
+      portalOwnerCompanyId={chromeCtx?.portalOwnerCompanyId ?? null}
     >
       <div className="page-hero">
         <div>
@@ -141,7 +150,7 @@ export default async function PortalSettingsPage() {
         </div>
       </div>
 
-      <PortalSettingsForm initial={settings} />
+      <PortalSettingsForm initial={settings} companies={companies} />
     </Chrome>
   );
 }

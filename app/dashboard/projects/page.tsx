@@ -16,6 +16,7 @@ export default async function ProjectsGuide() {
       user={ctx.user}
       activeCompany={ctx.activeCompany}
       tenantOptions={ctx.tenantOptions}
+      portalOwnerCompanyId={ctx.portalOwnerCompanyId ?? null}
     >
       <ModuleGuide
         moduleName="Projects"

@@ -41,6 +41,14 @@ export interface PortalSettings {
   audit: {
     retentionDays: number;
   };
+  governance: {
+    portalOwnerCompanyId: string | null;
+  };
+}
+
+export interface CompanyOption {
+  companyId: string;
+  name: string;
 }
 
 type Status = { kind: "idle" } | { kind: "saving" } | { kind: "ok" } | { kind: "err"; msg: string };
@@ -83,7 +91,13 @@ function SectionCard({ title, description, children }: { title: string; descript
 
 const inputCls = "ps-input";
 
-export function PortalSettingsForm({ initial }: { initial: PortalSettings }) {
+export function PortalSettingsForm({
+  initial,
+  companies,
+}: {
+  initial: PortalSettings;
+  companies: CompanyOption[];
+}) {
   const [s, setS] = useState<PortalSettings>(initial);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
 
@@ -289,6 +303,34 @@ export function PortalSettingsForm({ initial }: { initial: PortalSettings }) {
       </SectionCard>
 
       {/* ── Audit ──────────────────────────────────────────────────── */}
+      <SectionCard
+        title="Governance"
+        description="Which Company owns this portal. Members of the owning Company are the only ones who see portal-owner-only modules (e.g. Portal Settings) when they scope into it."
+      >
+        <Field
+          label="Portal-owning Company"
+          hint="Chrome hides portal-owner-only modules from any other tenant's scope. Leave blank to show them everywhere (initial-bootstrap only)."
+        >
+          <select
+            className={inputCls}
+            value={s.governance.portalOwnerCompanyId ?? ""}
+            onChange={(e) =>
+              setGroup("governance", {
+                portalOwnerCompanyId: e.target.value || null,
+              })
+            }
+            style={{ maxWidth: 360 }}
+          >
+            <option value="">— not configured —</option>
+            {companies.map((c) => (
+              <option key={c.companyId} value={c.companyId}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </SectionCard>
+
       <SectionCard title="Audit" description="How long audit history is retained.">
         <Field label="Retention (days)" hint="Audit entries older than this are eligible for purge.">
           <input className={inputCls} type="number" min={1} max={3650} value={s.audit.retentionDays} onChange={(e) => setGroup("audit", { retentionDays: Math.max(1, parseInt(e.target.value || "0", 10) || 1) })} style={{ maxWidth: 160 }} />
