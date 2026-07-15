@@ -104,6 +104,7 @@ export default async function PortalSettingsPage() {
       <Chrome
         active="portal-settings"
         pageTitle="Portal Settings"
+        portalWide
         user={chromeCtx?.user ?? { userId: claims.userId, displayName, handle, isOperator: false }}
         activeCompany={chromeCtx?.activeCompany ?? null}
         tenantOptions={chromeCtx?.tenantOptions ?? []}
@@ -125,6 +126,7 @@ export default async function PortalSettingsPage() {
     <Chrome
       active="portal-settings"
       pageTitle="Portal Settings"
+      portalWide
       user={chromeCtx?.user ?? { userId: claims.userId, displayName, handle, isOperator: true }}
       activeCompany={chromeCtx?.activeCompany ?? null}
       tenantOptions={chromeCtx?.tenantOptions ?? []}

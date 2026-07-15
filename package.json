@@ -18,7 +18,7 @@
     "start": "next start -p 8080"
   },
   "dependencies": {
-    "@freshifyv2/portal-shell-ui": "github:freshifyv2/freshify-portal-shell-ui#68051d6c4edee80d9a35042b31f849215ea36154",
+    "@freshifyv2/portal-shell-ui": "github:freshifyv2/freshify-portal-shell-ui#40386ed1eda43e5ef93c0a142cd991958bc97b9d",
     "next": "14.2.5",
     "react": "18.3.1",
     "react-dom": "18.3.1"

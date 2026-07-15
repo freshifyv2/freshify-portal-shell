@@ -35,6 +35,25 @@ interface WorkspacesStats {
   total: number;
   byType?: Record<string, number>;
 }
+interface AdminUserRow {
+  userId: string;
+  displayName: string | null;
+  email: string;
+  handle: string | null;
+  title: string | null;
+  lastActiveAt: string | null;
+  createdAt: string | null;
+  status: "active" | "pending" | "inactive";
+  assignedCompanies: Array<{ companyId: string; name: string }>;
+}
+interface AdminWorkspaceRow {
+  workspaceId: string;
+  name: string;
+  companyId: string;
+  companyName: string | null;
+  workspaceType?: string | null;
+  createdAt: string;
+}
 interface PortalInvite {
   inviteId: string;
   email: string;
@@ -118,20 +137,47 @@ export default async function Dashboard() {
   let workspacesStats: WorkspacesStats | null = null;
   let invites: PortalInvite[] = [];
   let auditEntries: AuditEntry[] = [];
+  let userRows: AdminUserRow[] = [];
+  let workspaceRows: AdminWorkspaceRow[] = [];
   if (isOperator) {
-    const [u, c, w, i, a] = await Promise.all([
+    const [u, c, w, i, a, uu, ww] = await Promise.all([
       fetchJSON<UsersStats>(`${USERS_URL}/v1/admin/users-stats`, token),
       fetchJSON<CompaniesStats>(`${COMPANIES_URL}/v1/admin/companies/stats`, token),
       fetchJSON<WorkspacesStats>(`${WORKSPACES_URL}/v1/admin/workspaces/stats`, token),
       fetchJSON<{ invites: PortalInvite[] }>(`${USERS_URL}/v1/portal-invites`, token),
       fetchJSON<{ entries: AuditEntry[] }>(`${USERS_URL}/v1/admin/audit-feed?limit=20`, token),
+      fetchJSON<{ users: AdminUserRow[] }>(`${USERS_URL}/v1/admin/users`, token),
+      fetchJSON<{ workspaces: AdminWorkspaceRow[] }>(`${WORKSPACES_URL}/v1/admin/workspaces`, token),
     ]);
     usersStats = u;
     companiesStats = c;
     workspacesStats = w;
     invites = i?.invites || [];
     auditEntries = a?.entries || [];
+    userRows = uu?.users || [];
+    workspaceRows = ww?.workspaces || [];
   }
+
+  // Sort user rows into two views: newest by createdAt, and most-recently-
+  // active by lastActiveAt. Nulls sink to the bottom in both cases.
+  const newUsers = [...userRows]
+    .sort((a, b) => {
+      const av = a.createdAt ? Date.parse(a.createdAt) : 0;
+      const bv = b.createdAt ? Date.parse(b.createdAt) : 0;
+      return bv - av;
+    })
+    .slice(0, 5);
+  const currentUsers = [...userRows]
+    .filter((u) => u.status === "active")
+    .sort((a, b) => {
+      const av = a.lastActiveAt ? Date.parse(a.lastActiveAt) : 0;
+      const bv = b.lastActiveAt ? Date.parse(b.lastActiveAt) : 0;
+      return bv - av;
+    })
+    .slice(0, 5);
+  const recentWorkspaces = [...workspaceRows]
+    .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
+    .slice(0, 5);
 
   return (
     <Chrome
@@ -247,102 +293,100 @@ export default async function Dashboard() {
         </div>
       )}
 
-      {/* Operator-only: portal-wide recent activity */}
+      {/* Three operator-only recent lists: New Users, Current Users, Recent Workspaces. */}
+      {isOperator && (
+        <div className="lists-grid">
+          <div className="list-card">
+            <div className="list-card-header">
+              <h3 className="list-card-title">New Users</h3>
+              <Link href="/dashboard/users/list" className="list-card-link">View all →</Link>
+            </div>
+            <div className="list-card-body">
+              {newUsers.length === 0 ? (
+                <p style={{ color: "var(--muted)", margin: 0, padding: 16 }}>No users yet.</p>
+              ) : (
+                <table className="data-table">
+                  <tbody>
+                    {newUsers.map((u) => (
+                      <tr key={u.userId}>
+                        <td>
+                          <div className="data-table-strong">{u.displayName || u.email}</div>
+                          <div className="data-table-sub">{u.email}</div>
+                        </td>
+                        <td style={{ textAlign: "right" }}>
+                          <div>{relativeTime(u.createdAt)}</div>
+                          <div className="user-cell-handle">{u.assignedCompanies[0]?.name ?? "—"}</div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+
+          <div className="list-card">
+            <div className="list-card-header">
+              <h3 className="list-card-title">Current Users</h3>
+              <Link href="/dashboard/users/list" className="list-card-link">View all →</Link>
+            </div>
+            <div className="list-card-body">
+              {currentUsers.length === 0 ? (
+                <p style={{ color: "var(--muted)", margin: 0, padding: 16 }}>No active users.</p>
+              ) : (
+                <table className="data-table">
+                  <tbody>
+                    {currentUsers.map((u) => (
+                      <tr key={u.userId}>
+                        <td>
+                          <div className="data-table-strong">{u.displayName || u.email}</div>
+                          <div className="data-table-sub">{u.assignedCompanies[0]?.name ?? "—"}</div>
+                        </td>
+                        <td style={{ textAlign: "right" }}>
+                          <div>{relativeTime(u.lastActiveAt)}</div>
+                          <div className="user-cell-handle">Last active</div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+
+          <div className="list-card">
+            <div className="list-card-header">
+              <h3 className="list-card-title">Recent Workspaces</h3>
+              <Link href="/dashboard/workspaces" className="list-card-link">View all →</Link>
+            </div>
+            <div className="list-card-body">
+              {recentWorkspaces.length === 0 ? (
+                <p style={{ color: "var(--muted)", margin: 0, padding: 16 }}>No workspaces yet.</p>
+              ) : (
+                <table className="data-table">
+                  <tbody>
+                    {recentWorkspaces.map((w) => (
+                      <tr key={w.workspaceId}>
+                        <td>
+                          <div className="data-table-strong">{w.name}</div>
+                          <div className="data-table-sub">{w.companyName ?? "—"}</div>
+                        </td>
+                        <td style={{ textAlign: "right" }}>
+                          <div>{relativeTime(w.createdAt)}</div>
+                          <div className="user-cell-handle">{w.workspaceType ?? "workspace"}</div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Recent activity moved to the bottom of the dashboard. */}
       {isOperator && <RecentActivity initialEntries={auditEntries} />}
-
-      {/* 2x list cards */}
-      <div className="lists-grid">
-        <div className="list-card">
-          <div className="list-card-header">
-            <h3 className="list-card-title">Active Session</h3>
-            <Link href="/dashboard/users/account" className="list-card-link">View account →</Link>
-          </div>
-          <div className="list-card-body">
-            <table className="data-table">
-              <tbody>
-                <tr>
-                  <td style={{ color: "var(--muted)", fontSize: 13 }}>USER</td>
-                  <td>
-                    <div className="user-cell">
-                      <div className="user-cell-text">
-                        <div className="user-cell-name">{displayName}</div>
-                        <div className="user-cell-handle">@{handle}</div>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td style={{ color: "var(--muted)", fontSize: 13 }}>ACTIVE CUSTOMER</td>
-                  <td>{claims.companyName || <span className="muted">—</span>}</td>
-                </tr>
-                <tr>
-                  <td style={{ color: "var(--muted)", fontSize: 13 }}>ACTIVE WORKSPACE</td>
-                  <td>{claims.workspaceName || <span className="muted">—</span>}</td>
-                </tr>
-                <tr>
-                  <td style={{ color: "var(--muted)", fontSize: 13 }}>ROLE</td>
-                  <td>
-                    <span className="pill is-violet">{claims.roles?.[0]?.role || "member"}</span>
-                    {isOperator && <span className="pill is-violet" style={{ marginLeft: 8 }}>operator</span>}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="list-card">
-          <div className="list-card-header">
-            <h3 className="list-card-title">Sovereign Modules</h3>
-            <Link href="/dashboard/companies" className="list-card-link">Open Customers →</Link>
-          </div>
-          <div className="list-card-body">
-            <table className="data-table">
-              <tbody>
-                <tr>
-                  <td>
-                    <Link href="/dashboard/companies" className="data-table-strong" style={{ color: "var(--fg)" }}>Customers</Link>
-                    <div className="data-table-sub">Sovereign tenant module (UCM)</div>
-                  </td>
-                  <td><span className="status-pill is-active">Live</span></td>
-                </tr>
-                <tr>
-                  <td>
-                    <Link href="/dashboard/workspaces" className="data-table-strong" style={{ color: "var(--fg)" }}>Workspaces</Link>
-                    <div className="data-table-sub">Per-customer workspace module (WSM)</div>
-                  </td>
-                  <td><span className="status-pill is-active">Live</span></td>
-                </tr>
-                <tr>
-                  <td>
-                    <Link href="/dashboard/users/account" className="data-table-strong" style={{ color: "var(--fg)" }}>Users</Link>
-                    <div className="data-table-sub">Identity + auth module (URM)</div>
-                  </td>
-                  <td><span className="status-pill is-active">Live</span></td>
-                </tr>
-                {isOperator && (
-                  <>
-                    <tr>
-                      <td>
-                        <Link href="/dashboard/users/list" className="data-table-strong" style={{ color: "var(--fg)" }}>Users (cross-tenant)</Link>
-                        <div className="data-table-sub">Operator-only directory</div>
-                      </td>
-                      <td><span className="status-pill is-active">Live</span></td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <Link href="/dashboard/portal-settings" className="data-table-strong" style={{ color: "var(--fg)" }}>Portal Settings</Link>
-                        <div className="data-table-sub">Branding, comms, auth, catalog</div>
-                      </td>
-                      <td><span className="status-pill is-active">Live</span></td>
-                    </tr>
-                  </>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
     </Chrome>
   );
 }
