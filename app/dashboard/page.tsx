@@ -186,7 +186,6 @@ export default async function Dashboard() {
       user={chromeCtx?.user ?? { userId: claims.userId, displayName, handle, isOperator }}
       activeCompany={chromeCtx?.activeCompany ?? (claims.companyName ? { name: claims.companyName } : null)}
       tenantOptions={chromeCtx?.tenantOptions ?? []}
-        visibleModuleKeys={chromeCtx?.visibleModuleKeys}
     >
       <h1 className="page-greeting">{`${greeting()} ${firstName}!`}</h1>
 

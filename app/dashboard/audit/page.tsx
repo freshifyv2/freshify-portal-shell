@@ -61,7 +61,6 @@ export default async function AuditPage() {
         user={chromeCtx?.user ?? { userId: claims.userId, displayName, handle, isOperator: false }}
         activeCompany={chromeCtx?.activeCompany ?? null}
         tenantOptions={chromeCtx?.tenantOptions ?? []}
-        visibleModuleKeys={chromeCtx?.visibleModuleKeys}
       >
         <div className="card" style={{ maxWidth: 640 }}>
           <h2 style={{ marginTop: 0 }}>Operator access required</h2>
@@ -84,7 +83,6 @@ export default async function AuditPage() {
       user={chromeCtx?.user ?? { userId: claims.userId, displayName, handle, isOperator: true }}
       activeCompany={chromeCtx?.activeCompany ?? null}
       tenantOptions={chromeCtx?.tenantOptions ?? []}
-        visibleModuleKeys={chromeCtx?.visibleModuleKeys}
     >
       <div className="page-hero">
         <div>
