@@ -1,8 +1,8 @@
 /**
- * Logout — portal-shell BFF (Deploy 5.10).
+ * Logout — portal-shell BFF (Deploy 5.10, 5.19).
  *
  * Clears the sp_session cookie and 302-redirects to the `next` query param
- * (defaults to /). Pure session teardown; the JWT itself remains valid
+ * (defaults to /login). Pure session teardown; the JWT itself remains valid
  * server-side until its exp, but without the cookie the browser stops
  * presenting it.
  */
@@ -12,10 +12,10 @@ import { SESSION_COOKIE } from "@/lib/session";
 export const dynamic = "force-dynamic";
 
 function safeNext(input: string | null): string {
-  if (!input) return "/";
+  if (!input) return "/login";
   // Only allow same-origin redirects.
   if (input.startsWith("/") && !input.startsWith("//")) return input;
-  return "/";
+  return "/login";
 }
 
 export async function GET(req: NextRequest) {
