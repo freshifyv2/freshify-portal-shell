@@ -52,6 +52,53 @@ const nextConfig = {
         destination: "/dashboard/workspaces/settings",
         permanent: true,
       },
+
+      // Deploy 5.21B — retire the per-record settings/roles/registry routes.
+      // Module-scoped settings live at /dashboard/{module}/settings.
+      // Per-record view of "users touching this record" already lives on the
+      // detail page itself.
+      {
+        source: "/dashboard/companies/:companyId/module-settings",
+        destination: "/dashboard/companies/settings",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/companies/:companyId/roles",
+        destination: "/dashboard/companies/settings#roles",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/companies/:companyId/registry",
+        destination: "/dashboard/companies/:companyId",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/workspaces/:workspaceId/module-settings",
+        destination: "/dashboard/workspaces/settings",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/workspaces/:workspaceId/roles",
+        destination: "/dashboard/workspaces/settings#roles",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/workspaces/:workspaceId/registry",
+        destination: "/dashboard/workspaces/:workspaceId",
+        permanent: true,
+      },
+
+      // Deploy 5.21A — fold Edit into Detail. /edit is deprecated.
+      {
+        source: "/dashboard/companies/:companyId/edit",
+        destination: "/dashboard/companies/:companyId#primary-information",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/workspaces/:workspaceId/edit",
+        destination: "/dashboard/workspaces/:workspaceId#primary-information",
+        permanent: true,
+      },
     ];
   },
   async rewrites() {
