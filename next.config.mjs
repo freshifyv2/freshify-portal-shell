@@ -99,6 +99,13 @@ const nextConfig = {
         destination: "/dashboard/workspaces/:workspaceId#primary-information",
         permanent: true,
       },
+
+      // Deploy 5.21C — /new folded into landing (inline create card).
+      {
+        source: "/dashboard/companies/new",
+        destination: "/dashboard/companies?new=1#create-customer",
+        permanent: true,
+      },
     ];
   },
   async rewrites() {
