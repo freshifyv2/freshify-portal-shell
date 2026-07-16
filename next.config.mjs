@@ -88,15 +88,13 @@ const nextConfig = {
         permanent: true,
       },
 
-      // Deploy 5.21A — fold Edit into Detail. /edit is deprecated.
+      // Deploy 5.21A — Companies /edit folded into Detail (inline form).
+      // Deploy 5.22B REVERSED for Workspaces — /edit is a real page again,
+      // scoped to editing THIS workspace's own fields. Do NOT add a shell
+      // redirect for /dashboard/workspaces/:workspaceId/edit.
       {
         source: "/dashboard/companies/:companyId/edit",
         destination: "/dashboard/companies/:companyId#primary-information",
-        permanent: true,
-      },
-      {
-        source: "/dashboard/workspaces/:workspaceId/edit",
-        destination: "/dashboard/workspaces/:workspaceId#primary-information",
         permanent: true,
       },
 
